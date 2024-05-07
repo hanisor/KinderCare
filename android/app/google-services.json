@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "304575978575",
+    "project_id": "kindercare-d2448",
+    "storage_bucket": "kindercare-d2448.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:304575978575:android:62aab2d904560ef9db5e3a",
+        "android_client_info": {
+          "package_name": "com.example.kindercare"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBeDXY8ZSNbmmlz_U_-KiMfgx3DMpa_bFg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
