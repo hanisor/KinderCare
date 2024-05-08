@@ -475,7 +475,7 @@ class _ParentHomepageState extends State<ParentHomepage> {
                 final SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
                 sharedPreferences.remove('email');
                 sharedPreferences.remove('token');
-                Get.to(Role());
+                Get.offAll(Role()); // Use Get.offAll to navigate without keeping the current screen in the stack
               },
             ),
           ],

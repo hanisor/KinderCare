@@ -15,9 +15,9 @@ class ParentPickup extends StatefulWidget {
 class _ParentPickupState extends State<ParentPickup> {
   final _formKey = GlobalKey<FormState>();
 
-  String? name = '';
-  String? relation = '';
-  String? phoneNumber = '';
+  String? name;
+  String? relation;
+  String? phoneNumber;
   DateTime? dateTime;
   List<ChildModel> _children = [];
   ChildModel? _selectedChild;
@@ -70,43 +70,76 @@ class _ParentPickupState extends State<ParentPickup> {
   }
 
   Future<void> addRelative() async {
-      try {
-        if (name == null ||
-            relation == null ||
-            phoneNumber == null ||
-            dateTime == null) {
-          return;
-        }
-
-        String formattedDateTime =
-            DateFormat("yyyy-MM-dd HH:mm:ss").format(dateTime!);
-
-        RequestController req = RequestController(path: 'guardian/add-relative');
-
-        req.setBody({
-          "name": name!,
-          "relation": relation!,
-          "phone_number": phoneNumber, 
-          "date_time": formattedDateTime,
-        });
-
-        var response = await req.post();
-
-        if (response.statusCode == 200) {
-          var result = req.result();
-
-          if (result != null && result.containsKey('relative')) {
-            print('Checklist item saved successfully');
-          } else {
-            print('Error saving checklist item');
-          }
-        } else {
-          print('Error: HTTP request failed with status code ${response.statusCode}');
-        }
-      } catch (e) {
-        print('Error: $e');
+    try {
+      if (name == null ||
+          relation == null ||
+          phoneNumber == null ||
+          dateTime == null) {
+        return;
       }
+
+      String formattedDateTime =
+          DateFormat("yyyy-MM-dd HH:mm:ss").format(dateTime!);
+
+      RequestController req = RequestController(path: 'guardian/add-relative');
+
+      req.setBody({
+        "name": name,
+        "relation": relation,
+        "phone_number": phoneNumber,
+        "date_time": formattedDateTime,
+      });
+
+      var response = await req.post();
+
+      if (response.statusCode == 200) {
+        var result = req.result();
+
+        if (result != null && result.containsKey('relative')) {
+          // If "Select All Children" is checked, relate the relative with all children
+          if (_selectAllChildren) {
+            for (var child in _children) {
+              await relateChildWithRelative(
+                  child.childId!, result['relative']['id']);
+            }
+          } else {
+            // If a specific child is selected, relate the relative with that child
+            if (_selectedChild != null) {
+              await relateChildWithRelative(
+                  _selectedChild!.childId!, result['relative']['id']);
+            }
+          }
+          print('Relative added successfully');
+        } else {
+          print('Error adding relative');
+        }
+      } else {
+        print(
+            'Error: HTTP request failed with status code ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error: $e');
     }
+  }
+
+  Future<void> relateChildWithRelative(int childId, int relativeId) async {
+    try {
+      RequestController req = RequestController(path: 'child_relative/relate');
+
+      req.setBody({
+        "child_id": childId,
+        "relative_id": relativeId,
+      });
+
+      var response = await req.post();
+
+      if (response.statusCode != 200) {
+        print('Error relating child with relative');
+      }
+    } catch (e) {
+      print('Error: $e');
+    }
+  }
 
   @override
   void initState() {
@@ -119,7 +152,7 @@ class _ParentPickupState extends State<ParentPickup> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
+        title: const Text(
           'Kindergarten Pickup Authorization Form',
         ),
       ),
@@ -131,14 +164,14 @@ class _ParentPickupState extends State<ParentPickup> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Text(
+                const Text(
                   'Children Information',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                SizedBox(height: 10),
+                const SizedBox(height: 10),
                 Row(
                   children: [
                     Checkbox(
@@ -153,7 +186,7 @@ class _ParentPickupState extends State<ParentPickup> {
                         });
                       },
                     ),
-                    Text('Select All Children'),
+                    const Text('Select All Children'),
                   ],
                 ),
                 // Dropdown for individual children
@@ -171,14 +204,14 @@ class _ParentPickupState extends State<ParentPickup> {
                             value: child,
                             child: Row(
                               children: [
-                                Icon(Icons.child_care),
-                                SizedBox(width: 10),
+                                const Icon(Icons.child_care),
+                                const SizedBox(width: 10),
                                 Text(child.childName),
                               ],
                             ),
                           );
                         }).toList(),
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Select Child',
                     prefixIcon: Icon(Icons.person),
                   ),
@@ -189,8 +222,8 @@ class _ParentPickupState extends State<ParentPickup> {
                     return null;
                   },
                 ),
-                SizedBox(height: 20),
-                Text(
+                const SizedBox(height: 20),
+                const Text(
                   'Relative Information',
                   style: TextStyle(
                     fontSize: 20,
@@ -198,7 +231,7 @@ class _ParentPickupState extends State<ParentPickup> {
                   ),
                 ),
                 TextFormField(
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Relative Name',
                     prefixIcon: Icon(Icons.person),
                   ),
@@ -215,7 +248,7 @@ class _ParentPickupState extends State<ParentPickup> {
                   },
                 ),
                 TextFormField(
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Relation',
                     prefixIcon: Icon(Icons.family_restroom),
                   ),
@@ -232,7 +265,7 @@ class _ParentPickupState extends State<ParentPickup> {
                   },
                 ),
                 TextFormField(
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Phone Number',
                     prefixIcon: Icon(Icons.phone),
                   ),
@@ -250,36 +283,38 @@ class _ParentPickupState extends State<ParentPickup> {
                   keyboardType: TextInputType.phone,
                 ),
                 DateTimeField(
-                decoration: InputDecoration(
-                  labelText: 'Date & Time',
-                  prefixIcon: Icon(Icons.calendar_month),),
-                format: DateFormat("yyyy-MM-dd HH:mm"), // Date and time format
-                onShowPicker: (context, currentValue) async {
-                  final date = await showDatePicker(
-                    context: context,
-                    firstDate: DateTime(2000),
-                    initialDate: currentValue ?? DateTime.now(),
-                    lastDate: DateTime(2100),
-                  );
-                  if (date != null) {
-                    final time = await showTimePicker(
+                  decoration: const InputDecoration(
+                    labelText: 'Date & Time',
+                    prefixIcon: Icon(Icons.calendar_month),
+                  ),
+                  format:
+                      DateFormat("yyyy-MM-dd HH:mm"), // Date and time format
+                  onShowPicker: (context, currentValue) async {
+                    final date = await showDatePicker(
                       context: context,
-                      initialTime: TimeOfDay.fromDateTime(
-                          currentValue ?? DateTime.now()),
+                      firstDate: DateTime(2000),
+                      initialDate: currentValue ?? DateTime.now(),
+                      lastDate: DateTime(2100),
                     );
-                    return DateTimeField.combine(
-                        date, time); // Combine date and time
-                  } else {
-                    return currentValue;
-                  }
-                },
-                onChanged: (DateTime? value) {
-                  setState(() {
-                    dateTime = value;
-                  });
-                },
-              ),
-                SizedBox(height: 20),
+                    if (date != null) {
+                      final time = await showTimePicker(
+                        context: context,
+                        initialTime: TimeOfDay.fromDateTime(
+                            currentValue ?? DateTime.now()),
+                      );
+                      return DateTimeField.combine(
+                          date, time); // Combine date and time
+                    } else {
+                      return currentValue;
+                    }
+                  },
+                  onChanged: (DateTime? value) {
+                    setState(() {
+                      dateTime = value;
+                    });
+                  },
+                ),
+                const SizedBox(height: 20),
                 Center(
                   child: ElevatedButton(
                     onPressed: () {
@@ -290,8 +325,7 @@ class _ParentPickupState extends State<ParentPickup> {
                         if (_selectAllChildren) {
                           print('All Children selected');
                         } else {
-                          print(
-                              'Selected Child: ${_selectedChild?.childName}');
+                          print('Selected Child: ${_selectedChild?.childName}');
                         }
                         print('Relative Name: $name');
                         print('Relation: $relation');
@@ -299,10 +333,11 @@ class _ParentPickupState extends State<ParentPickup> {
                         print('Pickup Date and Time: $dateTime');
                         // Other form data...
                       }
+                      addRelative();
                     },
                     style: ButtonStyle(
-                      backgroundColor:
-                          MaterialStateProperty.all(Color.fromARGB(255, 240, 196, 210)),
+                      backgroundColor: MaterialStateProperty.all(
+                          const Color.fromARGB(255, 240, 196, 210)),
                     ),
                     child: const Text('Authorize Pickup'),
                   ),
