@@ -2,6 +2,8 @@ import 'package:datetime_picker_formfield_new/datetime_picker_formfield.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:kindercare/model/child_model.dart';
+import 'package:kindercare/parentScreen/parent_pickuprepoprt.dart';
+import 'package:kindercare/parentScreen/pickup_report.dart';
 import 'package:kindercare/request_controller.dart';
 
 class ParentPickup extends StatefulWidget {
@@ -18,6 +20,7 @@ class _ParentPickupState extends State<ParentPickup> {
   String? name;
   String? relation;
   String? phoneNumber;
+  String status = 'ACTIVE';
   DateTime? dateTime;
   List<ChildModel> _children = [];
   ChildModel? _selectedChild;
@@ -81,44 +84,100 @@ class _ParentPickupState extends State<ParentPickup> {
       String formattedDateTime =
           DateFormat("yyyy-MM-dd HH:mm:ss").format(dateTime!);
 
-      RequestController req = RequestController(path: 'guardian/add-relative');
+      // Check if the relative already exists in the database
+      int? relativeId = await checkRelativeExistence();
+
+      if (relativeId == null) {
+        // If the relative doesn't exist, add them to the database
+        RequestController req =
+            RequestController(path: 'guardian/add-relative');
+
+        req.setBody({
+          "name": name,
+          "relation": relation,
+          "phone_number": phoneNumber,
+          "date_time": formattedDateTime,
+          "status": status,
+          "guardian_id": widget.parentId,
+
+        });
+
+        await req.post();
+        var response = req.result();
+        print("req resulttt : $response");
+
+        var responseData = response as Map<String, dynamic>; // Cast to Map
+
+        if (responseData.containsKey('message')) {
+          String message = responseData['message'];
+          print('response message: $message');
+          print(responseData['relative_id']);
+
+          if (message == 'relative added successfully') {
+            // Retrieve the newly added relative's ID
+            relativeId = responseData['relative_id'];
+            print('relativeId: $relativeId');
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ParentPickupReport(
+                  parentId:
+                      widget.parentId, // Pass the relative ID to PickupReportPage
+                ),
+              ),
+            );
+          } else {
+            print('Error: Relative was not added successfully');
+            return;
+          }
+        } else {
+          print('Error: Unexpected response format');
+          return;
+        }
+      }
+
+      // If "Select All Children" is checked, relate the relative with all children
+      if (_selectAllChildren) {
+        for (var child in _children) {
+          await relateChildWithRelative(child.childId!, relativeId!);
+        }
+      } else {
+        // If a specific child is selected, relate the relative with that child
+        if (_selectedChild != null) {
+          print('Selected Child ID: ${_selectedChild!.childId}');
+          await relateChildWithRelative(_selectedChild!.childId!, relativeId!);
+        }
+      }
+    } catch (e) {
+      print('Error: $e');
+    }
+  }
+
+// Function to check if the relative already exists in the database
+  Future<int?> checkRelativeExistence() async {
+    try {
+      RequestController req =
+          RequestController(path: 'guardian/check-relative');
 
       req.setBody({
         "name": name,
         "relation": relation,
         "phone_number": phoneNumber,
-        "date_time": formattedDateTime,
       });
 
       var response = await req.post();
+      var responseData = response as Map<String, dynamic>;
 
-      if (response.statusCode == 200) {
-        var result = req.result();
-
-        if (result != null && result.containsKey('relative')) {
-          // If "Select All Children" is checked, relate the relative with all children
-          if (_selectAllChildren) {
-            for (var child in _children) {
-              await relateChildWithRelative(
-                  child.childId!, result['relative']['id']);
-            }
-          } else {
-            // If a specific child is selected, relate the relative with that child
-            if (_selectedChild != null) {
-              await relateChildWithRelative(
-                  _selectedChild!.childId!, result['relative']['id']);
-            }
-          }
-          print('Relative added successfully');
-        } else {
-          print('Error adding relative');
-        }
+      if (responseData.containsKey('relative_id')) {
+        // If the relative exists, return their ID
+        return responseData['relative_id'];
       } else {
-        print(
-            'Error: HTTP request failed with status code ${response.statusCode}');
+        // If the relative doesn't exist, return null
+        return null;
       }
     } catch (e) {
       print('Error: $e');
+      return null;
     }
   }
 

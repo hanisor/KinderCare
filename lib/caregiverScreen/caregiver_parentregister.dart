@@ -134,7 +134,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                   fontSize: 24, color: Colors.white),
                             ),
                             title: Text(
-                              _foundUsers[index]['username'],
+                              _foundUsers[index]['name'],
                               style: const TextStyle(color: Colors.white),
                             ),
                           ),

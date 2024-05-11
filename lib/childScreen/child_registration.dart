@@ -44,7 +44,7 @@ class _ChildRegistrationState extends State<ChildRegistration> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Registration Failed'),
+          title: const Text('Registration Failed'),
           actions: [
             TextButton(
               child: const Text('OK'),
@@ -81,9 +81,10 @@ class _ChildRegistrationState extends State<ChildRegistration> {
         "age": childAge,
         "allergy": childAllergy,
         "gender": childGender,
+        "guardian_id": widget.parentId,
       });
 
-      await req.postNoToken();
+      await req.post();
 
       print(req.result());
 
@@ -116,7 +117,7 @@ class _ChildRegistrationState extends State<ChildRegistration> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
+        title: const Text(
           "Children Registration",
           style: TextStyle(
             fontWeight: FontWeight.bold,
@@ -132,7 +133,7 @@ class _ChildRegistrationState extends State<ChildRegistration> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
+                  const Text(
                     'Register the children',
                     style: TextStyle(
                       color: Colors.black87,
@@ -144,7 +145,7 @@ class _ChildRegistrationState extends State<ChildRegistration> {
                     child: TextField(
                       decoration: InputDecoration(
                         enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
+                          borderSide: const BorderSide(
                             width: 3,
                             color: Colors.pinkAccent,
                           ),
@@ -162,7 +163,7 @@ class _ChildRegistrationState extends State<ChildRegistration> {
                       keyboardType: TextInputType.phone,
                       decoration: InputDecoration(
                         enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
+                          borderSide: const BorderSide(
                             width: 3,
                             color: Colors.pinkAccent,
                           ),
@@ -180,7 +181,7 @@ class _ChildRegistrationState extends State<ChildRegistration> {
                       keyboardType: TextInputType.phone,
                       decoration: InputDecoration(
                         enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
+                          borderSide: const BorderSide(
                             width: 3,
                             color: Colors.pinkAccent,
                           ),
@@ -197,7 +198,7 @@ class _ChildRegistrationState extends State<ChildRegistration> {
                     child: TextField(
                       decoration: InputDecoration(
                         enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
+                          borderSide: const BorderSide(
                             width: 3,
                             color: Colors.pinkAccent,
                           ),
@@ -214,7 +215,7 @@ class _ChildRegistrationState extends State<ChildRegistration> {
                     child: TextField(
                       decoration: InputDecoration(
                         enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
+                          borderSide: const BorderSide(
                             width: 3,
                             color: Colors.pinkAccent,
                           ),
@@ -255,7 +256,7 @@ class _ChildRegistrationState extends State<ChildRegistration> {
                           ),
                           onPressed: () {
                             childRegister();
-                            Future.delayed(Duration(seconds: 2), () {
+                            Future.delayed(const Duration(seconds: 2), () {
                               Navigator.push(
                                   context,
                                   MaterialPageRoute(

@@ -1,12 +1,9 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:http/http.dart' as http;
 import 'package:kindercare/caregiverScreen/caregiver_login.dart';
+import 'package:kindercare/request_controller.dart';
 
 class CaregiverRegistration extends StatefulWidget {
-  const CaregiverRegistration({Key? key}) : super(key: key);
-
   @override
   State<CaregiverRegistration> createState() => _CaregiverRegistrationState();
 }
@@ -61,29 +58,31 @@ class _CaregiverRegistrationState extends State<CaregiverRegistration> {
         this.caregiverId = caregiverId;
         print('caregiver Id after setState: $caregiverId');
       });
-      return caregiverId; // Return caregiverId
+      return caregiverId;
     } catch (error) {
-      print('Error fetching caregiver details: $error'); // Print error to debug
-      throw error; // Re-throw the error
+      print('Error fetching caregiver details: $error');
+      throw error;
     }
   }
 
-  Future<Map<String, dynamic>> getCaregiverDetails(String email) async {
-    var url = Uri.parse('http://172.20.10.3:8000/caregiver/by-email?email=$email'); // Pass email as parameter
-    var response = await http.get(url);
-    if (response.statusCode == 200) {
-      // Caregiver retrieved successfully
-      final caregiver = json.decode(response.body);
-      print('Caregiver: $caregiver');
-      // Return the caregiver data
-      return caregiver;
-    } else {
-      // Error occurred
-      print('Failed to get caregiver: ${response.reasonPhrase}');
-      // Return null or throw an exception, depending on your requirements
-      throw Exception('Failed to get caregiver: ${response.reasonPhrase}');
-    }
+  Future<Map<String, dynamic>> getCaregiverDetails(String? email) async {
+  print('email : $email');
+  RequestController req = RequestController(path: 'caregiver-byEmail?email=$email');
+
+  await req.get();
+  var response = req.result();
+  var statusCode = req.status(); // Retrieve status code
+  
+  print("Status code: $statusCode"); // Log status code
+  
+  if (statusCode == 200 && response != null) { // Check if status code is 200 and response is not null
+    print('response : $response');
+    return response;
+  } else {
+    throw Exception('Failed to load caregiver details');
   }
+}
+
 
   Future<void> caregiverRegister() async {
     String caregiverEmail = caregiverEmailEditCtrl.text.trim();
@@ -112,9 +111,9 @@ class _CaregiverRegistrationState extends State<CaregiverRegistration> {
           'Please ensure it meets the strength criteria.');
       return;
     } else {
-      var url = Uri.parse(
-          "http://172.20.10.3:8000/caregiver/register");
-      var response = await http.post(url, body: {
+      RequestController req = RequestController(path: 'caregiver-register');
+
+      req.setBody({
         "name": caregiverName,
         "ic_number": caregiverIc,
         "phone_number": caregiverPhone,
@@ -126,17 +125,21 @@ class _CaregiverRegistrationState extends State<CaregiverRegistration> {
         "image": caregiverImage,
       });
 
-      print("Response: ${response.body}");
-      var data = json.decode(response.body);
-      if (data == "Error") {
-        _showRegistrationFailedDialog(
-            context, 'Registration failed. Please try again.');
-      } else {
+      await req.postNoToken();
+
+      var result = req.result();
+      print('result : $result');
+
+      // Check if req.result() contains the 'guardian' field to indicate success
+      if (result != null && result.containsKey('caregiver')) {
+        // Registration success logic
         var caregiverIdFuture =
             fetchCaregiverDetails(); // Get the Future<String>
+        print('caregiverIdFuture : $caregiverIdFuture');
         int caregiverId =
             await caregiverIdFuture; // Wait for the Future<String> to complete
-        print("caregiverID = $caregiverId");
+        
+        print("caregiverId = $caregiverId");
         Fluttertoast.showToast(
           msg: "Registration successful",
           toastLength: Toast.LENGTH_SHORT,
@@ -147,9 +150,7 @@ class _CaregiverRegistrationState extends State<CaregiverRegistration> {
           fontSize: 16.0,
         );
         Navigator.push(
-            context,MaterialPageRoute(
-            builder: (context) => CaregiverLogin(),
-        ));
+            context, MaterialPageRoute(builder: (context) => CaregiverLogin()));
       }
     }
   }
@@ -319,7 +320,8 @@ class _CaregiverRegistrationState extends State<CaregiverRegistration> {
                       ),
                     ),
                     const Text('- Minimum 8 characters long'),
-                    const Text('- Contains a mix of uppercase and lowercase letters'),
+                    const Text(
+                        '- Contains a mix of uppercase and lowercase letters'),
                     const Text(
                         '- Includes numbers and special characters (!@#%^&*(),.?":{}|<>)'),
                     const Text('- Avoids common patterns and dictionary words'),

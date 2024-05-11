@@ -30,7 +30,7 @@ class _CaregiverEditProfileState extends State<CaregiverEditProfile> {
   Future<Map<String, dynamic>> getCaregiverDetails(String? email) async {
     print('email : $email');
     RequestController req =
-        RequestController(path: 'caregiver/by-email?email=$email');
+        RequestController(path: 'caregiver-byEmail?email=$email');
 
     await req.get();
     var response = req.result();
@@ -60,7 +60,7 @@ class _CaregiverEditProfileState extends State<CaregiverEditProfile> {
     }
   }
 
-  Future<void> caregiverEdit(int? caregiverId) async {
+  /*  Future<void> caregiverEdit(int? caregiverId) async {
     String caregiverName = caregiverNameController.text.trim();
     String caregiverIcNumber = caregiverIcController.text.trim();
     String caregiverEmail = caregiverEmailController.text.trim();
@@ -106,6 +106,92 @@ class _CaregiverEditProfileState extends State<CaregiverEditProfile> {
         gravity: ToastGravity.CENTER,
         timeInSecForIosWeb: 1,
         backgroundColor: Colors.pinkAccent,
+        textColor: Colors.white,
+        fontSize: 16.0,
+      );
+    }
+  } */
+
+  Future<void> caregiverUpdate(
+    int? caregiverId,
+    String currentName,
+    String currentUsername,
+    String currentIC,
+    String currentPhone, {
+    String? newName,
+    String? newUsername,
+    String? newIC,
+    String? newPhone,
+  }) async {
+    Map<String, dynamic> requestData = {
+      "id": caregiverId,
+      if (newName != null) "name": newName,
+      if (newUsername != null) "username": newUsername,
+      if (newIC != null) "ic_number": newIC,
+      if (newPhone != null) "phone_number": newPhone,
+    };
+
+    // Make sure the requestData contains at least one field to update
+    if (requestData.isEmpty) {
+      print("No fields to update");
+      return;
+    }
+
+    RequestController req =
+        RequestController(path: 'caregiver/update-profile/$caregiverId');
+    req.setBody(requestData); // Set request body with updated data
+
+    try {
+      await req.put(); // Perform the PUT request
+      print(req.result()); // Print the result of the request
+
+      if (req.status() == 200) {
+        print("caregiverId: ${caregiverId}");
+        print("HTTP Response: ${req.status()}");
+        var data = req.result();
+        if (data == "Error") {
+          Fluttertoast.showToast(
+            msg: "This data failed to be updated",
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.CENTER,
+            timeInSecForIosWeb: 1,
+            backgroundColor: Colors.pinkAccent,
+            textColor: Colors.white,
+            fontSize: 16.0,
+          );
+        } else {
+          Fluttertoast.showToast(
+            msg: "Edit successful",
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.CENTER,
+            timeInSecForIosWeb: 1,
+            backgroundColor: Colors.green, // Change to green for success
+            textColor: Colors.white,
+            fontSize: 16.0,
+          );
+        }
+      } else {
+        // Handle HTTP error
+        print("HTTP request failed with status code: ${req.status()}");
+        Fluttertoast.showToast(
+          msg: "HTTP request failed with status code: ${req.status()}",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.CENTER,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.red, // Change to red for error
+          textColor: Colors.white,
+          fontSize: 16.0,
+        );
+      }
+    } catch (e) {
+      print("Error updating parent: $e");
+      // Handle any errors that occur during the request
+      Fluttertoast.showToast(
+        msg: "An error occurred while updating",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.CENTER,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.red, // Change to red for error
         textColor: Colors.white,
         fontSize: 16.0,
       );
@@ -252,16 +338,43 @@ class _CaregiverEditProfileState extends State<CaregiverEditProfile> {
                           backgroundColor:
                               MaterialStateProperty.all(Colors.pinkAccent),
                         ),
-                        onPressed: () {
-                          setState(() {
-                            caregiverEdit(caregiverId);
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const CaregiverProfile(),
-                              ),
-                            );
-                          });
+                        onPressed: () async {
+                          try {
+                            setState(() {
+                              // Get the updated values from text controllers
+                              String newName =
+                                  caregiverNameController.text.trim();
+                              String newUsername =
+                                  caregiverUsernameController.text.trim();
+                              String newIC = caregiverIcController.text.trim();
+                              String newPhone =
+                                  caregiverPhoneController.text.trim();
+
+                              // Call the update function with existing data for fields that are not being updated
+                              caregiverUpdate(
+                                caregiverId,
+                                caregiverName, // Existing name
+                                caregiverUsername, // Existing username
+                                caregiverIcNumber, // Existing IC number
+                                caregiverPhoneNumber, // Existing phone number
+                                newName: newName.isNotEmpty
+                                    ? newName
+                                    : null, // Updated name if provided
+                                newUsername: newUsername.isNotEmpty
+                                    ? newUsername
+                                    : null, // Updated username if provided
+                                newIC: newIC.isNotEmpty
+                                    ? newIC
+                                    : null, // Updated IC number if provided
+                                newPhone: newPhone.isNotEmpty
+                                    ? newPhone
+                                    : null, // Updated phone number if provided
+                              );
+                            });
+                            Navigator.pop(context);
+                          } catch (e) {
+                            print('Navigation error: $e');
+                          }
                         },
                         child: const Text("Save"),
                       ),

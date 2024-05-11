@@ -50,7 +50,7 @@ class _ParentNoteState extends State<ParentNote> {
     if (response.statusCode == 200) {
       var result = req.result();
       print('response = $result');
-      if (result != null && result.containsKey('note')) {
+      if (result != null && result.containsKey('notes')) {
         print('Checklist item saved successfully');
         // Clear text field after successful submission
         //noteDetailsController.clear();

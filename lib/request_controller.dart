@@ -4,17 +4,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class RequestController {
   String path;
-  String server = "http://10.131.73.207:8000/api/";
+  String server = "http://192.168.94.11:8000/api/";
+  //String server = "http://10.131.77.183:8000/api/";
   http.Response? _res;
   final Map<dynamic, dynamic> _body = {};
   final Map<String, String> _headers = {};
   dynamic _resultData;
 
-  /**d
-   * 10.0.2.2 -> emulator on Android Studio
-   * 10.0.3.2 -> emulator on Genymotion
-   * 10.132.7.13 -> ipconfig for network connection
-   **/
   RequestController({required this.path});
   setBody(Map<String, dynamic> data) {
     _body.clear();
@@ -22,7 +18,7 @@ class RequestController {
     _headers["Content-Type"] = "application/json; charset=UTF-8";
   }
 
-    Future<void> postNoToken() async {
+  Future<void> postNoToken() async {
     _res = await http.post(
       Uri.parse(server + path),
       headers: _headers,
@@ -72,6 +68,7 @@ class RequestController {
     String? token = sharedPreferences.getString("token");
     if (token!.isNotEmpty) {
       // Check if token is not null before calling isNotEmpty
+      print('token - $token');
       var header = {
         "Content-Type": "application/json",
         "Authorization": "Bearer $token",

@@ -33,7 +33,7 @@ class _SplashScreenState extends State<SplashScreen> {
     super.initState();
     getValidationData().whenComplete(() async{
       Timer(Duration(seconds: 2), () => Get.to(() => finalEmail == null
-          ? Role() : ParentHomepage ())); // Pass userId to CaregiverHomepage
+          ? Role() : CaregiverHomepage ())); // Pass userId to CaregiverHomepage
 
     });
   }

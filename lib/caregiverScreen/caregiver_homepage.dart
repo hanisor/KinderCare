@@ -24,6 +24,7 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   String caregiverUsername = '';
+  int? caregiverId;
 
   Future<void> fetchCaregiverDetails() async {
     try {
@@ -31,6 +32,8 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
       print('Response Data: $data');
       setState(() {
         caregiverUsername = data['username'];
+        caregiverId = data['id'];
+
         print('caregiverUsername after setState: $caregiverUsername');
       });
     } catch (error) {
@@ -38,28 +41,18 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
     }
   }
 
-/*   Future<Map<String, dynamic>> getCaregiverDetails(String email) async {
-    var url = Uri.parse(
-        'http://172.20.10.3/xampp/fyp/caregiver_controller_layer/read_caregiver.php?email=$email'); // Pass email as parameter
-    var response = await http.get(url);
-    if (response.statusCode == 200) {
-      return json.decode(response.body);
-    } else {
-      throw Exception('Failed to load caregiver details');
-    }
-  } */
-  Future<Map<String, dynamic>> getCaregiverDetails(String? email) async{
+  Future<Map<String, dynamic>> getCaregiverDetails(String? email) async {
     print('email : $email');
-    RequestController req = RequestController(
-        path: 'caregiver/by-email?email=$email');
+    RequestController req =
+        RequestController(path: 'caregiver-byEmail?email=$email');
 
     await req.get();
     var response = req.result();
-    print("${req.status()}");
-    if(req.status() == 200){
-       return response;
-    }
-    else {
+    print("response = ${req.result()}");
+    print("status = ${req.status()}");
+    if (req.status() == 200) {
+      return response;
+    } else {
       throw Exception('Failed to load caregiver details');
     }
   }
@@ -110,7 +103,8 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => CaregiverAttendance()),
+                        MaterialPageRoute(
+                            builder: (context) => CaregiverAttendance()),
                       );
                     },
                     child: Container(
@@ -155,7 +149,8 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => CaregiverSickness()),
+                        MaterialPageRoute(
+                            builder: (context) => CaregiverSickness()),
                       );
                     },
                     child: Container(
@@ -200,7 +195,8 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => CaregiverNote()),
+                        MaterialPageRoute(
+                            builder: (context) => CaregiverNote()),
                       );
                     },
                     child: Container(
@@ -249,7 +245,8 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => CaregiverPickup()),
+                        MaterialPageRoute(
+                            builder: (context) => CaregiverPickup()),
                       );
                     },
                     child: Container(
@@ -294,7 +291,8 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => CaregiverAbsence()),
+                        MaterialPageRoute(
+                            builder: (context) => CaregiverAbsence()),
                       );
                     },
                     child: Container(
@@ -343,7 +341,8 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => CaregiverBehaviour()),
+                        MaterialPageRoute(
+                            builder: (context) => CaregiverBehaviour()),
                       );
                     },
                     child: Container(
@@ -388,7 +387,8 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => CaregiverPerformance()),
+                        MaterialPageRoute(
+                            builder: (context) => CaregiverPerformance()),
                       );
                     },
                     child: Container(
@@ -474,7 +474,8 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
               leading: const Icon(Icons.logout),
               title: const Text('Logout'),
               onTap: () async {
-                final SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+                final SharedPreferences sharedPreferences =
+                    await SharedPreferences.getInstance();
                 sharedPreferences.remove('email');
                 Get.to(Role());
               },
@@ -485,12 +486,17 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
     );
   }
 
-  Widget _buildSection({required IconData icon, required String title, required String content, Color? color}) {
+  Widget _buildSection(
+      {required IconData icon,
+      required String title,
+      required String content,
+      Color? color}) {
     return Card(
       elevation: 2,
       child: ListTile(
         leading: Icon(icon),
-        title: Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        title: Text(title,
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         subtitle: Text(content),
         onTap: () {
           Navigator.push(

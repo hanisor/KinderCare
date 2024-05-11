@@ -41,7 +41,7 @@ class _CaregiverProfileState extends State<CaregiverProfile> {
     Future<Map<String, dynamic>> getCaregiverDetails(String? email) async{
     print('email : $email');
     RequestController req = RequestController(
-        path: 'caregiver/by-email?email=$email');
+        path: 'caregiver-byEmail?email=$email');
 
     await req.get();
     var response = req.result();

@@ -22,7 +22,6 @@ class _ParentRegistrationState extends State<ParentRegistration> {
   bool _obscurePassword2 = true;
   int? parentId;
 
-
   void _showRegistrationFailedDialog(BuildContext context, String content) {
     showDialog(
       context: context,
@@ -67,17 +66,6 @@ class _ParentRegistrationState extends State<ParentRegistration> {
     }
   }
 
-
-/*   Future<Map<String, dynamic>> getParentDetails(String email) async {
-    var url = Uri.parse(
-        'http://172.20.10.3/xampp/fyp/caregiver_controller_layer/read_parent.php?email=$email'); // Pass email as parameter
-    var response = await http.get(url);
-    if (response.statusCode == 200) {
-      return json.decode(response.body);
-    } else {
-      throw Exception('Failed to load parent details');
-    }
-  } */
   Future<Map<String, dynamic>> getParentDetails(String? email) async {
   print('email : $email');
   RequestController req = RequestController(path: 'guardian-byEmail?email=$email');
