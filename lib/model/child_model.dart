@@ -1,3 +1,5 @@
+import 'package:flutter/src/material/list_tile.dart';
+
 class ChildModel {
   int? childId; // Change type to int
   final String childName;
@@ -49,5 +51,7 @@ class ChildModel {
   set setChildId(int? newId) {
     childId = newId;
   }
+
+  map(ListTile Function(dynamic child) param0) {}
 // You can create setters for other fields in a similar manner if needed
 }

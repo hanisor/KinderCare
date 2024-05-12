@@ -111,15 +111,15 @@ class _ParentPickupReportState extends State<ParentPickupReport> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Pickup Report'),
+        title: const Text('Pickup Report'),
       ),
       body: RefreshIndicator(
         onRefresh: _fetchRelativeData,
         child: SingleChildScrollView(
-          physics: AlwaysScrollableScrollPhysics(),
+          physics: const AlwaysScrollableScrollPhysics(),
           child: Container(
-            padding: EdgeInsets.all(16),
-            margin: EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
+            margin: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Colors.blue[50],
               borderRadius: BorderRadius.circular(16),
@@ -128,29 +128,29 @@ class _ParentPickupReportState extends State<ParentPickupReport> {
                   color: Colors.grey.withOpacity(0.3),
                   spreadRadius: 3,
                   blurRadius: 5,
-                  offset: Offset(0, 3),
+                  offset: const Offset(0, 3),
                 ),
               ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const Text(
                   'Relative Information:',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
-                SizedBox(height: 10),
+                const SizedBox(height: 10),
                 Text('Name: ${relativeName ?? ''}'),
                 Text('Relation: ${relation ?? ''}'),
                 Text('Phone Number: ${phoneNumber ?? ''}'),
                 Text(
                     'Pickup Date and Time: ${pickupDateTime != null ? DateFormat.yMd().add_jm().format(pickupDateTime!) : 'Loading...'}'),
-                SizedBox(height: 20),
-                Text(
+                const SizedBox(height: 20),
+                const Text(
                   'Children Information:',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
-                SizedBox(height: 10),
+                const SizedBox(height: 10),
                 if (_children.isNotEmpty)
                   Column(
                     children: _children.map((child) {
@@ -161,8 +161,8 @@ class _ParentPickupReportState extends State<ParentPickupReport> {
                     }).toList(),
                   )
                 else
-                  Text('No children associated with this relative.'),
-                SizedBox(height: 20),
+                  const Text('No children associated with this relative.'),
+                const SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -177,7 +177,7 @@ class _ParentPickupReportState extends State<ParentPickupReport> {
                             ),
                           );
                         },
-                        child: Text('Add Pickup Relative'),
+                        child: const Text('Add Pickup Relative'),
                       ),
                     ElevatedButton(
                       onPressed: () {
@@ -185,7 +185,7 @@ class _ParentPickupReportState extends State<ParentPickupReport> {
                       },
                       style:
                           ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                      child: Text('Delete Report'),
+                      child: const Text('Delete Report'),
                     ),
                   ],
                 ),

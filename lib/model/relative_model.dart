@@ -4,7 +4,7 @@ class RelativeModel {
   final String relation;
   final String phone_number;
   final String dateTime;
-  final String status;
+  String status;
   int? parentId;
 
   RelativeModel({
