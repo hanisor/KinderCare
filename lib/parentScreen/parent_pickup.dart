@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:kindercare/model/child_model.dart';
 import 'package:kindercare/parentScreen/parent_pickuprepoprt.dart';
-import 'package:kindercare/parentScreen/pickup_report.dart';
 import 'package:kindercare/request_controller.dart';
 
 class ParentPickup extends StatefulWidget {

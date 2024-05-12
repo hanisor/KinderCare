@@ -3,7 +3,6 @@ import 'package:intl/intl.dart';
 import 'package:kindercare/model/child_model.dart';
 import 'package:kindercare/parentScreen/parent_pickup.dart';
 import 'package:kindercare/request_controller.dart';
-import '../model/relative_model.dart';
 
 class ParentPickupReport extends StatefulWidget {
   final int? parentId;
@@ -156,7 +155,7 @@ class _ParentPickupReportState extends State<ParentPickupReport> {
                   Column(
                     children: _children.map((child) {
                       return ListTile(
-                        title: Text(child.childName ?? ''),
+                        title: Text(child.childName),
                         // Other child details...
                       );
                     }).toList(),

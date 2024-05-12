@@ -4,12 +4,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class RequestController {
   String path;
-  String server = "http://192.168.94.11:8000/api/";
+  String server = "http://192.168.157.11:8000/api/";
   //String server = "http://10.131.77.183:8000/api/";
   http.Response? _res;
   final Map<dynamic, dynamic> _body = {};
   final Map<String, String> _headers = {};
   dynamic _resultData;
+
 
   RequestController({required this.path});
   setBody(Map<String, dynamic> data) {
@@ -18,7 +19,7 @@ class RequestController {
     _headers["Content-Type"] = "application/json; charset=UTF-8";
   }
 
-  Future<void> postNoToken() async {
+    Future<void> postNoToken() async {
     _res = await http.post(
       Uri.parse(server + path),
       headers: _headers,

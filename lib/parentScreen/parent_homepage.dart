@@ -45,7 +45,8 @@ class _ParentHomepageState extends State<ParentHomepage> {
 
   Future<Map<String, dynamic>> getParentDetails(String? email) async {
     print('email : $email');
-    RequestController req = RequestController(path: 'guardian-byEmail?email=$email');
+    RequestController req =
+        RequestController(path: 'guardian-byEmail?email=$email');
     await req.get();
     var response = req.result();
     print("${req.status()}");
@@ -63,12 +64,11 @@ class _ParentHomepageState extends State<ParentHomepage> {
     print('InitState: ParentUsername: $parentUsername');
   }
 
-    Future<void> _refreshData() async {
+  Future<void> _refreshData() async {
     // Implement the logic to refresh data here
-      await fetchParentDetails(); // Call the method to fetch parent details again
+    await fetchParentDetails(); // Call the method to fetch parent details again
     // You can add more logic to refresh other data as needed
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -83,12 +83,13 @@ class _ParentHomepageState extends State<ParentHomepage> {
           },
         ),
       ),
-       body: RefreshIndicator(
+      body: RefreshIndicator(
         onRefresh: _refreshData,
         child: SingleChildScrollView(
           physics: AlwaysScrollableScrollPhysics(),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -116,9 +117,10 @@ class _ParentHomepageState extends State<ParentHomepage> {
                   children: [
                     GestureDetector(
                       onTap: () {
-                        Navigator.push(context, MaterialPageRoute(
-                            builder: (context) => ParentAttendance()
-                        ));
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => ParentAttendance()));
                       },
                       child: Container(
                         width: 120,
@@ -160,9 +162,11 @@ class _ParentHomepageState extends State<ParentHomepage> {
                     SizedBox(width: 13),
                     GestureDetector(
                       onTap: () {
-                        Navigator.push(context, MaterialPageRoute(
-                            builder: (context) => ParentSickness(parentId: parentId)
-                        ));
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    ParentSickness(parentId: parentId)));
                       },
                       child: Container(
                         width: 85,
@@ -204,9 +208,11 @@ class _ParentHomepageState extends State<ParentHomepage> {
                     SizedBox(width: 13),
                     GestureDetector(
                       onTap: () {
-                        Navigator.push(context, MaterialPageRoute(
-                            builder: (context) => ParentNote(parentId: parentId)
-                        ));
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    ParentNote(parentId: parentId)));
                       },
                       child: Container(
                         width: 85,
@@ -252,9 +258,11 @@ class _ParentHomepageState extends State<ParentHomepage> {
                   children: [
                     GestureDetector(
                       onTap: () {
-                        Navigator.push(context, MaterialPageRoute(
-                            builder: (context) => ParentPickupReport(parentId: parentId)
-                        ));
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    ParentPickupReport(parentId: parentId)));
                       },
                       child: Container(
                         width: 180,
@@ -296,9 +304,10 @@ class _ParentHomepageState extends State<ParentHomepage> {
                     SizedBox(width: 13),
                     GestureDetector(
                       onTap: () {
-                        Navigator.push(context, MaterialPageRoute(
-                            builder: (context) => ParentAbsence()
-                        ));
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => ParentAbsence()));
                       },
                       child: Container(
                         width: 120,
@@ -344,9 +353,10 @@ class _ParentHomepageState extends State<ParentHomepage> {
                   children: [
                     GestureDetector(
                       onTap: () {
-                        Navigator.push(context, MaterialPageRoute(
-                            builder: (context) => ParentBehaviour()
-                        ));
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => ParentBehaviour()));
                       },
                       child: Container(
                         width: 130,
@@ -388,9 +398,10 @@ class _ParentHomepageState extends State<ParentHomepage> {
                     SizedBox(width: 13),
                     GestureDetector(
                       onTap: () {
-                        Navigator.push(context, MaterialPageRoute(
-                            builder: (context) => ParentPerformance()
-                        ));
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => ParentPerformance()));
                       },
                       child: Container(
                         width: 170,
@@ -463,19 +474,20 @@ class _ParentHomepageState extends State<ParentHomepage> {
               leading: const Icon(Icons.account_circle),
               title: const Text('Profile'),
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(
-                    builder: (context) => ParentProfile()
-                ));
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => ParentProfile()));
               },
             ),
             ListTile(
               leading: const Icon(Icons.logout),
               title: const Text('Logout'),
               onTap: () async {
-                final SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+                final SharedPreferences sharedPreferences =
+                    await SharedPreferences.getInstance();
                 sharedPreferences.remove('email');
                 sharedPreferences.remove('token');
-                Get.offAll(Role()); // Use Get.offAll to navigate without keeping the current screen in the stack
+                Get.offAll(
+                    Role()); // Use Get.offAll to navigate without keeping the current screen in the stack
               },
             ),
           ],
@@ -484,19 +496,22 @@ class _ParentHomepageState extends State<ParentHomepage> {
     );
   }
 
-  Widget _buildSection({required IconData icon, required String title, required String content, Color? color}) {
+  Widget _buildSection(
+      {required IconData icon,
+      required String title,
+      required String content,
+      Color? color}) {
     return Card(
       elevation: 2,
-        child: ListTile(
-          leading: Icon(icon),
-          title: Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          subtitle: Text(content),
-          onTap: () {
-            // Handle section tap
-          },
-        ),
+      child: ListTile(
+        leading: Icon(icon),
+        title: Text(title,
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        subtitle: Text(content),
+        onTap: () {
+          // Handle section tap
+        },
+      ),
     );
   }
-
 }
-

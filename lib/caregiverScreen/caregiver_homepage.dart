@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import 'package:kindercare/caregiverScreen/caregiver_absence.dart';
 import 'package:kindercare/caregiverScreen/caregiver_attendance.dart';
 import 'package:kindercare/caregiverScreen/caregiver_behaviour.dart';
@@ -9,6 +11,7 @@ import 'package:kindercare/caregiverScreen/caregiver_performance.dart';
 import 'package:kindercare/caregiverScreen/caregiver_pickup.dart';
 import 'package:kindercare/caregiverScreen/caregiver_profile.dart';
 import 'package:kindercare/caregiverScreen/caregiver_sick.dart';
+import 'package:kindercare/model/note_model.dart';
 import 'package:kindercare/request_controller.dart';
 import 'package:kindercare/splash_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -25,10 +28,12 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
 
   String caregiverUsername = '';
   int? caregiverId;
+  List<NoteModel> noteList = []; // List to hold checklist items
 
   Future<void> fetchCaregiverDetails() async {
     try {
-      final data = await getCaregiverDetails(finalEmail!);
+      print('parent email : $finalEmail');
+      final data = await getCaregiverDetails(finalEmail);
       print('Response Data: $data');
       setState(() {
         caregiverUsername = data['username'];
@@ -57,11 +62,90 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
     }
   }
 
+  Future<void> fetchNotesByParentId() async {
+    RequestController req = RequestController(
+        path: 'note/sendby-parent'); // Pass email as parameter
+
+    await req.get();
+    var response = req.result();
+    if (response != null && response is List) {
+      setState(() {
+        noteList = List<NoteModel>.from(response.map((x) {
+          // Ensure noteId is parsed as an integer
+          x['id'] = int.tryParse(x['id'].toString());
+          print("noteId: ${x['id']}"); // Debug noteId
+          print("noteStatus: ${x['status']}"); // Debug noteStatus
+          return NoteModel.fromJson(x);
+        }).where((item) =>
+            item.noteStatus == 'UNREAD' &&
+            item.senderType == 'parent')); // Filter items with status 'Pending'
+
+        // Filter notes with status "unread"
+        /* noteList = noteList
+            .where((note) =>
+                DateTime.now().difference(note.noteDateTime).inDays <= 1)
+            .toList(); */
+
+        // Sort notes by date time (optional)
+        noteList.sort((a, b) => a.noteDateTime.compareTo(b.noteDateTime));
+
+        print("Updated noteList: $noteList"); // Print updated noteList
+
+        print("Updated noteList: $noteList"); // Print updated noteList
+      });
+    }
+  }
+
+  Future<void> updateNoteStatus(int? noteId, int index) async {
+    // Prepare the request body with the status "Taken"
+    Map<String, dynamic> requestBody = {};
+    NoteModel item = noteList[index];
+
+    if (item.noteStatus == "UNREAD") {
+      requestBody["status"] = "READ";
+      item.noteStatus = "READ";
+    }
+
+    // Create an instance of RequestController
+    RequestController req =
+        RequestController(path: 'note/update-status/$noteId');
+
+    req.setBody(requestBody);
+    await req.put();
+
+    print(req.result());
+    if (req.status() == 200) {
+      Fluttertoast.showToast(
+        msg: 'Update successfully',
+        backgroundColor: Colors.white,
+        textColor: Colors.red,
+        gravity: ToastGravity.CENTER,
+        toastLength: Toast.LENGTH_SHORT,
+        fontSize: 16.0,
+      );
+    } else {
+      Fluttertoast.showToast(
+        msg: 'Update failed!',
+        backgroundColor: Colors.white,
+        textColor: Colors.red,
+        gravity: ToastGravity.CENTER,
+        toastLength: Toast.LENGTH_SHORT,
+        fontSize: 16.0,
+      );
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     fetchCaregiverDetails();
     print('InitState: caregiverUsername: $caregiverUsername');
+  }
+
+  Future<void> _refresh() async {
+    // Call fetchCaregiverDetails and fetchNotesByParentId again
+    await fetchCaregiverDetails();
+    await fetchNotesByParentId();
   }
 
   @override
@@ -76,6 +160,12 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
             _scaffoldKey.currentState!.openDrawer();
           },
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _refresh,
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -96,7 +186,102 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
                 title: 'Registration',
                 content: 'Parent and children Registration',
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 15),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Title for the section
+                  Padding(
+                    padding: EdgeInsets.symmetric(vertical: 10.0),
+                    child: Text(
+                      'Notes from Parents',
+                      style: GoogleFonts.playfairDisplay(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.black,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  // Container for the notes section
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.lightBlue[50],
+                      borderRadius: BorderRadius.circular(20.0),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.5),
+                          spreadRadius: 5,
+                          blurRadius: 7,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: SizedBox(
+                      height: 300, // Adjust height as needed
+                      child: noteList.isEmpty
+                          ? const Center(
+                              child: Text(
+                                'No Notes',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            )
+                          : ListView.builder(
+                              itemCount: noteList.length,
+                              itemBuilder: (BuildContext context, int index) {
+                                NoteModel item = noteList[index];
+                                return Card(
+                                  elevation: 4,
+                                  margin: const EdgeInsets.symmetric(
+                                      vertical: 8, horizontal: 16),
+                                  child: ListTile(
+                                    title: RichText(
+                                      text: TextSpan(
+                                        style:
+                                            DefaultTextStyle.of(context).style,
+                                        children: <TextSpan>[
+                                          TextSpan(
+                                            text:
+                                                'Parent Name: ${item.parentModel?.parentName}',
+                                            style: const TextStyle(
+                                                fontWeight: FontWeight.bold),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    subtitle: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(item.noteDetails),
+                                        Text(
+                                            _formatDateTime(item.noteDateTime)),
+                                      ],
+                                    ),
+                                    trailing: Checkbox(
+                                      value: item.noteStatus == 'READ',
+                                      onChanged: (bool? value) {
+                                        setState(() {
+                                          item.noteStatus =
+                                              value! ? 'READ' : 'UNREAD';
+                                        });
+                                        // Call updateSicknessStatus when the checkbox is toggled
+                                        updateNoteStatus(item.noteId,
+                                            index); // Pass index here
+                                      },
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 15),
               Row(
                 children: [
                   GestureDetector(
@@ -104,7 +289,7 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => CaregiverAttendance()),
+                            builder: (context) => const CaregiverAttendance()),
                       );
                     },
                     child: Container(
@@ -118,11 +303,11 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
                             color: Colors.grey.withOpacity(0.5),
                             spreadRadius: 5,
                             blurRadius: 7,
-                            offset: Offset(0, 3),
+                            offset: const Offset(0, 3),
                           ),
                         ],
                       ),
-                      padding: EdgeInsets.all(16.0),
+                      padding: const EdgeInsets.all(16.0),
                       child: const Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -144,13 +329,13 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
                       ),
                     ),
                   ),
-                  SizedBox(width: 13),
+                  const SizedBox(width: 13),
                   GestureDetector(
                     onTap: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => CaregiverSickness()),
+                            builder: (context) => const CaregiverSickness()),
                       );
                     },
                     child: Container(
@@ -164,11 +349,11 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
                             color: Colors.grey.withOpacity(0.5),
                             spreadRadius: 5,
                             blurRadius: 7,
-                            offset: Offset(0, 3),
+                            offset: const Offset(0, 3),
                           ),
                         ],
                       ),
-                      padding: EdgeInsets.all(16.0),
+                      padding: const EdgeInsets.all(16.0),
                       child: const Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -190,13 +375,14 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
                       ),
                     ),
                   ),
-                  SizedBox(width: 13),
+                  const SizedBox(width: 13),
                   GestureDetector(
                     onTap: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => CaregiverNote()),
+                            builder: (context) =>
+                                CaregiverNote(caregiverId: caregiverId)),
                       );
                     },
                     child: Container(
@@ -210,11 +396,11 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
                             color: Colors.grey.withOpacity(0.5),
                             spreadRadius: 5,
                             blurRadius: 7,
-                            offset: Offset(0, 3),
+                            offset: const Offset(0, 3),
                           ),
                         ],
                       ),
-                      padding: EdgeInsets.all(16.0),
+                      padding: const EdgeInsets.all(16.0),
                       child: const Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -246,7 +432,7 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => CaregiverPickup()),
+                            builder: (context) => const CaregiverPickup()),
                       );
                     },
                     child: Container(
@@ -260,11 +446,11 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
                             color: Colors.grey.withOpacity(0.5),
                             spreadRadius: 5,
                             blurRadius: 7,
-                            offset: Offset(0, 3),
+                            offset: const Offset(0, 3),
                           ),
                         ],
                       ),
-                      padding: EdgeInsets.all(16.0),
+                      padding: const EdgeInsets.all(16.0),
                       child: const Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -286,13 +472,13 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
                       ),
                     ),
                   ),
-                  SizedBox(width: 13),
+                  const SizedBox(width: 13),
                   GestureDetector(
                     onTap: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => CaregiverAbsence()),
+                            builder: (context) => const CaregiverAbsence()),
                       );
                     },
                     child: Container(
@@ -306,11 +492,11 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
                             color: Colors.grey.withOpacity(0.5),
                             spreadRadius: 5,
                             blurRadius: 7,
-                            offset: Offset(0, 3),
+                            offset: const Offset(0, 3),
                           ),
                         ],
                       ),
-                      padding: EdgeInsets.all(16.0),
+                      padding: const EdgeInsets.all(16.0),
                       child: const Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -342,7 +528,7 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => CaregiverBehaviour()),
+                            builder: (context) => const CaregiverBehaviour()),
                       );
                     },
                     child: Container(
@@ -356,11 +542,11 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
                             color: Colors.grey.withOpacity(0.5),
                             spreadRadius: 5,
                             blurRadius: 7,
-                            offset: Offset(0, 3),
+                            offset: const Offset(0, 3),
                           ),
                         ],
                       ),
-                      padding: EdgeInsets.all(16.0),
+                      padding: const EdgeInsets.all(16.0),
                       child: const Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -382,13 +568,13 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
                       ),
                     ),
                   ),
-                  SizedBox(width: 13),
+                  const SizedBox(width: 13),
                   GestureDetector(
                     onTap: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => CaregiverPerformance()),
+                            builder: (context) => const CaregiverPerformance()),
                       );
                     },
                     child: Container(
@@ -402,11 +588,11 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
                             color: Colors.grey.withOpacity(0.5),
                             spreadRadius: 5,
                             blurRadius: 7,
-                            offset: Offset(0, 3),
+                            offset: const Offset(0, 3),
                           ),
                         ],
                       ),
-                      padding: EdgeInsets.all(16.0),
+                      padding: const EdgeInsets.all(16.0),
                       child: const Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -466,7 +652,8 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => CaregiverProfile()),
+                  MaterialPageRoute(
+                      builder: (context) => const CaregiverProfile()),
                 );
               },
             ),
@@ -496,17 +683,24 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
       child: ListTile(
         leading: Icon(icon),
         title: Text(title,
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         subtitle: Text(content),
         onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => RegisterPage(),
-            ),
-          );
+          if (title == 'Registration') {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const RegisterPage(),
+              ),
+            );
+          }
         },
       ),
     );
+  }
+
+  String _formatDateTime(DateTime dateTime) {
+    // Format the DateTime object in 12-hour system with AM/PM indicator
+    return DateFormat('MMMM dd, yyyy hh:mm a').format(dateTime);
   }
 }

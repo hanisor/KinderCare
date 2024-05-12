@@ -116,7 +116,7 @@ class _ParentSicknessState extends State<ParentSickness> {
           // Ensure sicknessId is parsed as an integer
           x['id'] = int.tryParse(x['id'].toString());
           print("SicknessId: ${x['id']}"); // Debug sicknessId
-          print("sicknessType: ${x['type']}"); // Debug sicknessType
+          print(" sicknessType: ${x['type']}"); // Debug sicknessType
           return SicknessModel.fromJson(x);
         }));
 
@@ -134,47 +134,9 @@ class _ParentSicknessState extends State<ParentSickness> {
     }
   }
 
-  /* Future<void> _updateSicknessStatus(int? sicknessId, bool isChecked) async {
-    if (sicknessId == null) {
-      // Handle the case when sicknessId is null
-      print('Error: sicknessId is null');
-      return;
-    }
+   
 
-    setState(() {
-      checkedMap[sicknessId] = isChecked;
-      print('checkedMap[sicknessId] = ${checkedMap[sicknessId]}');
-    });
-
-    // Update sickness status in the backend
-    var url = Uri.parse(
-        'http://10.115.233.234/xampp/fyp_kindercare/child_controller_layer/update_sickness.php');
-
-    var response = await http.put(
-      url,
-      headers: {
-        'Content-Type': 'application/json', // Set content-type to JSON
-      },
-      body: jsonEncode({
-        "id": sicknessId.toString(), // Convert to string
-        "status": isChecked ? "Taken" : "Not Taken",
-      }),
-    ); 
-
-    // Handle response and error
-    if (response.statusCode == 200) {
-      // Sickness status updated successfully
-      print('Sickness status updated successfully for sicknessId: $sicknessId');
-    } else {
-      // Error updating sickness status
-      print('Error updating sickness status: ${response.statusCode}');
-      // Revert the UI change if update fails
-      setState(() {
-        checkedMap[sicknessId] = !isChecked;
-      });
-    }
-  }*/
-
+  
   Future<void> _refreshData() async {
     //await getChildrenData();
     await fetchChecklistItems();

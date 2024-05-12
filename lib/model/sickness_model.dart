@@ -1,12 +1,14 @@
+import 'child_model.dart';
+
 class SicknessModel {
   int? sicknessId;
-  final String sicknessType;
+  String sicknessType;
   final String dosage;
   final String dateTime;
-  final String sicknessStatus;
+  String sicknessStatus;
   int? childId;
   bool isChecked; // Add isChecked property
-
+  ChildModel? childModel; // Include ChildModel property
 
   SicknessModel({
     this.sicknessId,
@@ -16,6 +18,7 @@ class SicknessModel {
     required this.sicknessStatus,
     this.childId,
     this.isChecked = false, // Initialize isChecked to false
+    this.childModel,
   });
 
   factory SicknessModel.fromJson(Map<String, dynamic> json) {
@@ -24,28 +27,9 @@ class SicknessModel {
       sicknessType: json['type'],
       dosage: json['dosage'],
       dateTime: json['date_time'],
-      childId: json['child_id'],
       sicknessStatus: json['status'],
+      childId: json['child_id'],
+      childModel: json['child'] != null ? ChildModel.fromJson(json['child']) : null, // Parse child data
     );
   }
-
-  // Getter for sicknessId
-  int? get getSicknessId => sicknessId;
-
-  // Setter for sicknessId
-  set setSicknessId(int? id) {
-    sicknessId = id;
-  }
-
-  // Getter for sicknessType
-  String get getSicknessType => sicknessType;
-
-  // Getter for dosage
-  String get getDosage => dosage;
-
-  // Getter for dateTime
-  String get getDateTime => dateTime;
-
-  // Getter for childId
-  int? get getChildId => childId;
 }

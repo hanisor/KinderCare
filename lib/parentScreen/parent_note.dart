@@ -14,6 +14,7 @@ class ParentNote extends StatefulWidget {
 class _ParentNoteState extends State<ParentNote> {
   TextEditingController noteDetailsController = TextEditingController();
   String status = "UNREAD";
+  String senderType = "parent";
   int caregiverId = 1;
   DateTime? dateTime;
   List<NoteModel> noteList = []; // List to hold checklist items
@@ -40,6 +41,7 @@ class _ParentNoteState extends State<ParentNote> {
     req.setBody({
       "detail": noteDetailsController.text,
       "status": status,
+      "sender_type": senderType,
       "date_time": formattedDateTime, // Convert DateTime to String
       "guardian_id": widget.parentId,
       "caregiver_id": caregiverId,

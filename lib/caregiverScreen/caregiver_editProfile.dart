@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kindercare/caregiverScreen/caregiver_profile.dart';
 import 'package:kindercare/request_controller.dart';
 
 import '../splash_screen.dart';
