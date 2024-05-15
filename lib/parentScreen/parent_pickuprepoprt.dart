@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:kindercare/model/child_model.dart';
+import 'package:kindercare/model/childRelative_model.dart';
 import 'package:kindercare/parentScreen/parent_pickup.dart';
 import 'package:kindercare/request_controller.dart';
 
@@ -13,108 +13,78 @@ class ParentPickupReport extends StatefulWidget {
 }
 
 class _ParentPickupReportState extends State<ParentPickupReport> {
-  List<ChildModel> _children = [];
-  String? relativeName;
-  int? relativeId;
-  String? relation;
-  String? phoneNumber;
-  DateTime? pickupDateTime;
-  bool showAddButton = false;
+  List<ChildRelativeModel> childRelativeList = [];
 
-  Future<void> _fetchRelativeData() async {
-    try {
-      RequestController req =
-          RequestController(path: 'child-relatives/${widget.parentId}');
-      await req.get();
-      var response = req.result();
+  Future<void> fetchRelative() async {
+    RequestController req = RequestController(path: 'childRelative-data');
 
-      if (response != null && response.containsKey('child_relatives')) {
-        List<dynamic> relativesData = response['child_relatives'];
-
-        setState(() {
-          relativeId = relativesData[0]['id'];
-          relativeName = relativesData[0]['relative_name'];
-          relation = relativesData[0]['relation'];
-          phoneNumber = relativesData[0]['phone_number'];
-          pickupDateTime = DateTime.parse(relativesData[0]['date_time']);
-
-          _children = relativesData.map((relative) {
-            return ChildModel(
-              childId: relative['child_id'],
-              childName: relative['child_name'],
-              childMykidNumber: "", // Dummy value for childMykidNumber
-              childAge: 0, // Dummy value for childAge
-              childGender: "", // Dummy value for childGender
-              childAllergies: "", // Dummy value for childAllergies
-              parentId: widget.parentId ?? 0, // Use parentId passed to widget
-            );
-          }).toList();
-        });
-
-        // Check if there are children associated with the relative
-        if (_children.isEmpty) {
-          showAddButton = true; // Show "Add Pickup Relative" button
-        }
-      } else {
-        print('Error: Response does not contain the expected data structure');
-      }
-    } catch (e) {
-      print('Error fetching relative data: $e');
-    }
-  }
-
-/*  Future<void> softDeleteRelative() async {
-  RequestController req = RequestController(path: 'child-relatives/delete/${widget.parentId}');
-  try {
-    // Perform the update operation using the put method and await it
-    await req.put();
-
-    // After successfully soft deleting the relative, update the UI
-    setState(() {
-      // Update UI or state variables if needed
-      status = "INACTIVE"; // Update status to 'INACTIVE'
-    });
-  } catch (e) {
-    print('Error soft deleting relative: $e');
-  }
-} */
-// Method to update the status to INACTIVE
- Future<void> softDeleteRelative() async {
-  // Ensure that relativeId is not null before proceeding
-  if (relativeId != null) {
-    // Send a request to the backend to update the status to INACTIVE
-    try {
-      // Create an instance of RequestController
-      RequestController req =
-          RequestController(path: 'relative/delete/${widget.parentId}');
-
-      // Set the request body including the relative ID
-      req.setBody({"id": relativeId, "status": "INACTIVE"});
-      print('relativeid = $relativeId');
-
-      // Execute the request and wait for the result
-      await req.put();
-
-     /*  // Update the UI state if needed
+    await req.get();
+    var response = req.result();
+    if (response != null && response is List) {
       setState(() {
-        status = "INACTIVE";
-      }); */
-    } catch (e) {
-      print('Error deactivating relative: $e');
+        childRelativeList = List<ChildRelativeModel>.from(response.map((x) {
+          x['id'] = int.tryParse(x['id'].toString());
+          return ChildRelativeModel.fromJson(x);
+        }).where((item) => item.relativeModel?.status == 'ACTIVE'));
+
+        childRelativeList.sort((a, b) {
+          if (a.relativeModel?.dateTime == null ||
+              b.relativeModel?.dateTime == null) {
+            if (a.relativeModel?.dateTime == null &&
+                b.relativeModel?.dateTime != null) {
+              return 1;
+            } else if (a.relativeModel?.dateTime != null &&
+                b.relativeModel?.dateTime == null) {
+              return -1;
+            } else {
+              return 0;
+            }
+          }
+          return a.relativeModel!.dateTime.compareTo(b.relativeModel!.dateTime);
+        });
+      });
     }
-  } else {
-    print('Error: Relative ID is null');
   }
-}
+
+  Future<void> softDeleteRelative(int? relativeId) async {
+    if (relativeId != null) {
+      try {
+        RequestController req =
+            RequestController(path: 'relative/delete/$relativeId');
+        req.setBody({"id": relativeId, "status": "INACTIVE"});
+        await req.put();
+        // Refresh the list after deletion
+        fetchRelative();
+      } catch (e) {
+        print('Error deactivating relative: $e');
+      }
+    } else {
+      print('Error: Relative ID is null');
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    fetchRelative();
+  }
 
   @override
   Widget build(BuildContext context) {
+    Map<int, List<ChildRelativeModel>> childrenByRelativeId = {};
+    for (var childRelative in childRelativeList) {
+      if (!childrenByRelativeId.containsKey(childRelative.relativeId)) {
+        childrenByRelativeId[childRelative.relativeId] = [];
+      }
+      childrenByRelativeId[childRelative.relativeId]!.add(childRelative);
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Pickup Report'),
       ),
       body: RefreshIndicator(
-        onRefresh: _fetchRelativeData,
+        onRefresh: fetchRelative,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           child: Container(
@@ -132,65 +102,100 @@ class _ParentPickupReportState extends State<ParentPickupReport> {
                 ),
               ],
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Relative Information:',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 10),
-                Text('Name: ${relativeName ?? ''}'),
-                Text('Relation: ${relation ?? ''}'),
-                Text('Phone Number: ${phoneNumber ?? ''}'),
-                Text(
-                    'Pickup Date and Time: ${pickupDateTime != null ? DateFormat.yMd().add_jm().format(pickupDateTime!) : 'Loading...'}'),
-                const SizedBox(height: 20),
-                const Text(
-                  'Children Information:',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 10),
-                if (_children.isNotEmpty)
-                  Column(
-                    children: _children.map((child) {
-                      return ListTile(
-                        title: Text(child.childName),
-                        // Other child details...
+            child: childRelativeList.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const SizedBox(
+                          width: 300,
+                          height: 200,
+                          child: Center(
+                            child: Text(
+                              'No pickup schedule',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        ElevatedButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    ParentPickup(parentId: widget.parentId),
+                              ),
+                            );
+                          },
+                          child: const Text('Add Pickup Relative'),
+                        ),
+                      ],
+                    ),
+                  )
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: childrenByRelativeId.entries.map((entry) {
+                      List<ChildRelativeModel> children = entry.value;
+                      var relative = children.first.relativeModel;
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Relative Information:',
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 10),
+                          Text('Name: ${relative?.name ?? ''}'),
+                          Text('Relation: ${relative?.relation ?? ''}'),
+                          Text('Phone Number: ${relative?.phone_number ?? ''}'),
+                          Text(
+                            'Pickup Date and Time: ${relative?.dateTime != null ? DateFormat.yMd().add_jm().format(DateTime.parse(relative!.dateTime)) : 'Loading...'}',
+                          ),
+                          const SizedBox(height: 20),
+                          const Text(
+                            'Children Information:',
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 10),
+                          if (children.isNotEmpty)
+                            Column(
+                              children: children.map((childRelative) {
+                                return ListTile(
+                                  title: Text(
+                                      'Child Name: ${childRelative.childModel!.childName}'),
+                                );
+                              }).toList(),
+                            )
+                          else
+                            const Text(
+                                'No children associated with this relative.'),
+                          const SizedBox(height: 20),
+                          ElevatedButton(
+                            onPressed: () {
+                              softDeleteRelative(relative?.relativeId);
+                            },
+                            style: ElevatedButton.styleFrom(
+                                backgroundColor:
+                                    Color.fromARGB(255, 255, 7, 148)),
+                            child: const Text(
+                              'Delete Report',
+                              style: TextStyle(
+                                color: Color.fromARGB(255, 255, 255, 255), // Custom font color
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                        ],
                       );
                     }).toList(),
-                  )
-                else
-                  const Text('No children associated with this relative.'),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    if (showAddButton)
-                      ElevatedButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  ParentPickup(parentId: widget.parentId),
-                            ),
-                          );
-                        },
-                        child: const Text('Add Pickup Relative'),
-                      ),
-                    ElevatedButton(
-                      onPressed: () {
-                        softDeleteRelative(); // Soft delete the report
-                      },
-                      style:
-                          ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                      child: const Text('Delete Report'),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+                  ),
           ),
         ),
       ),
