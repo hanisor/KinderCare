@@ -3,7 +3,6 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:kindercare/caregiverScreen/caregiver_absence.dart';
 import 'package:kindercare/caregiverScreen/caregiver_attendance.dart';
 import 'package:kindercare/caregiverScreen/caregiver_behaviour.dart';
 import 'package:kindercare/caregiverScreen/caregiver_note.dart';
@@ -62,7 +61,7 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
     }
   }
 
-  Future<void> fetchNotesByParentId() async {
+  Future<void> fetchNotesByParent() async {
     RequestController req = RequestController(
         path: 'note/sendby-parent'); // Pass email as parameter
 
@@ -78,13 +77,8 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
           return NoteModel.fromJson(x);
         }).where((item) =>
             item.noteStatus == 'UNREAD' &&
+            item.caregiverId== caregiverId &&
             item.senderType == 'parent')); // Filter items with status 'Pending'
-
-        // Filter notes with status "unread"
-        /* noteList = noteList
-            .where((note) =>
-                DateTime.now().difference(note.noteDateTime).inDays <= 1)
-            .toList(); */
 
         // Sort notes by date time (optional)
         noteList.sort((a, b) => a.noteDateTime.compareTo(b.noteDateTime));
@@ -145,7 +139,7 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
   Future<void> _refresh() async {
     // Call fetchCaregiverDetails and fetchNotesByParentId again
     await fetchCaregiverDetails();
-    await fetchNotesByParentId();
+    await fetchNotesByParent();
   }
 
   @override
@@ -160,17 +154,15 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
             _scaffoldKey.currentState!.openDrawer();
           },
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _refresh,
-          ),
-        ],
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
-          child: Column(
+     body: RefreshIndicator(
+        onRefresh: _refresh,
+        child: SingleChildScrollView(
+          physics: AlwaysScrollableScrollPhysics(),
+          child: Padding(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
@@ -293,7 +285,53 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
                       );
                     },
                     child: Container(
-                      width: 120,
+                      width: 147,
+                      height: 100,
+                      decoration: BoxDecoration(
+                        color: Colors.pinkAccent,
+                        borderRadius: BorderRadius.circular(20.0),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.5),
+                            spreadRadius: 5,
+                            blurRadius: 7,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      padding: const EdgeInsets.all(16.0),
+                      child: const Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.file_copy,
+                            color: Colors.white,
+                            size: 30,
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            'Report',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 15.0,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 13),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const CaregiverAttendance()),
+                      );
+                    },
+                    child: Container(
+                      width: 147,
                       height: 100,
                       decoration: BoxDecoration(
                         color: Colors.pinkAccent,
@@ -330,6 +368,59 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
                     ),
                   ),
                   const SizedBox(width: 13),
+                ],
+              ),
+              const SizedBox(height: 13),
+              Row(
+                children: [
+                  
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) =>
+                                CaregiverNote(caregiverId: caregiverId)),
+                      );
+                    },
+                    child: Container(
+                      width: 85,
+                      height: 104,
+                      decoration: BoxDecoration(
+                        color: Colors.pinkAccent,
+                        borderRadius: BorderRadius.circular(20.0),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.5),
+                            spreadRadius: 5,
+                            blurRadius: 7,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      padding: const EdgeInsets.all(16.0),
+                      child: const Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.edit_note,
+                            color: Colors.white,
+                            size: 30,
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            'Notes',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 15.0,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 13),
                   GestureDetector(
                     onTap: () {
                       Navigator.push(
@@ -340,7 +431,7 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
                     },
                     child: Container(
                       width: 85,
-                      height: 100,
+                      height: 104,
                       decoration: BoxDecoration(
                         color: Colors.pinkAccent,
                         borderRadius: BorderRadius.circular(20.0),
@@ -381,63 +472,12 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) =>
-                                CaregiverNote(caregiverId: caregiverId)),
-                      );
-                    },
-                    child: Container(
-                      width: 85,
-                      height: 100,
-                      decoration: BoxDecoration(
-                        color: Colors.pinkAccent,
-                        borderRadius: BorderRadius.circular(20.0),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.5),
-                            spreadRadius: 5,
-                            blurRadius: 7,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
-                      ),
-                      padding: const EdgeInsets.all(16.0),
-                      child: const Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.edit_note,
-                            color: Colors.white,
-                            size: 30,
-                          ),
-                          SizedBox(height: 8),
-                          Text(
-                            'Notes',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 15.0,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 13),
-              Row(
-                children: [
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
                             builder: (context) => const CaregiverPickup()),
                       );
                     },
                     child: Container(
-                      width: 180,
-                      height: 100,
+                      width: 110,
+                      height: 104,
                       decoration: BoxDecoration(
                         color: Colors.pinkAccent,
                         borderRadius: BorderRadius.circular(20.0),
@@ -459,9 +499,16 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
                             color: Colors.white,
                             size: 30,
                           ),
-                          SizedBox(height: 8),
                           Text(
-                            'Authorize Pick-up',
+                            'Authorize',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 15.0,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            'Pick-up',
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 15.0,
@@ -473,51 +520,6 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
                     ),
                   ),
                   const SizedBox(width: 13),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const CaregiverAbsence()),
-                      );
-                    },
-                    child: Container(
-                      width: 120,
-                      height: 100,
-                      decoration: BoxDecoration(
-                        color: Colors.pinkAccent,
-                        borderRadius: BorderRadius.circular(20.0),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.5),
-                            spreadRadius: 5,
-                            blurRadius: 7,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
-                      ),
-                      padding: const EdgeInsets.all(16.0),
-                      child: const Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.calendar_month,
-                            color: Colors.white,
-                            size: 30,
-                          ),
-                          SizedBox(height: 8),
-                          Text(
-                            'Absence',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 15.0,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
                 ],
               ),
               const SizedBox(height: 13),
@@ -608,15 +610,16 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
                               color: Colors.white,
                               fontSize: 15.0,
                               fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:kindercare/caregiverScreen/add_session.dart';
 import 'package:kindercare/caregiverScreen/caregiver_homepage.dart';
 import 'package:kindercare/request_controller.dart';
 
@@ -261,7 +262,7 @@ class _ChildRegistrationState extends State<ChildRegistration> {
                                   context,
                                   MaterialPageRoute(
                                       builder: (context) =>
-                                          CaregiverHomepage()));
+                                          AddSession()));
                             });
                           },
                           child: const Text("Done"),

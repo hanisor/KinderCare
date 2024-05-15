@@ -44,6 +44,7 @@ class _CaregiverLoginState extends State<CaregiverLogin> {
 
       // store token in shared preferences
       sharedPreferences.setString("token", token);
+      sharedPreferences.setString("email", caregiverEmail);
 
       Navigator.push(
         context,

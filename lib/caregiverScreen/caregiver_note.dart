@@ -16,7 +16,6 @@ class _CaregiverNoteState extends State<CaregiverNote> {
   TextEditingController noteDetailsController = TextEditingController();
   String status = "UNREAD";
   String senderType = "caregiver";
-  int caregiverId = 1;
   DateTime? dateTime;
   List<NoteModel> noteList = []; // List to hold checklist items
   ParentModel? selectedParent; // Initialize selectedChild

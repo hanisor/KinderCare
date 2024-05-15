@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
+import 'package:kindercare/model/note_model.dart';
 import 'package:kindercare/parentScreen/parent_absence.dart';
 import 'package:kindercare/parentScreen/parent_attendance.dart';
 import 'package:kindercare/parentScreen/parent_behaviour.dart';
@@ -26,6 +29,7 @@ class _ParentHomepageState extends State<ParentHomepage> {
 
   String parentUsername = '';
   int? parentId;
+  List<NoteModel> noteList = []; // List to hold checklist items
 
   Future<void> fetchParentDetails() async {
     try {
@@ -57,6 +61,74 @@ class _ParentHomepageState extends State<ParentHomepage> {
     }
   }
 
+   Future<void> fetchNotesByCaregiver() async {
+    RequestController req = RequestController(
+        path: 'note/sendby-caregiver'); // Pass email as parameter
+
+    await req.get();
+    var response = req.result();
+    if (response != null && response is List) {
+      setState(() {
+        noteList = List<NoteModel>.from(response.map((x) {
+          // Ensure noteId is parsed as an integer
+          x['id'] = int.tryParse(x['id'].toString());
+          print("noteId: ${x['id']}"); // Debug noteId
+          print("noteStatus: ${x['status']}"); // Debug noteStatus
+          return NoteModel.fromJson(x);
+        }).where((item) =>
+            item.noteStatus == 'UNREAD' &&
+            item.parentId == parentId &&
+            item.senderType == 'caregiver')); // Filter items with status 'Pending'
+
+        // Sort notes by date time (optional)
+        noteList.sort((a, b) => a.noteDateTime.compareTo(b.noteDateTime));
+
+        print("Updated noteList: $noteList"); // Print updated noteList
+
+        print("Updated noteList: $noteList"); // Print updated noteList
+      });
+    }
+  }
+
+   Future<void> updateNoteStatus(int? noteId, int index) async {
+    // Prepare the request body with the status "Taken"
+    Map<String, dynamic> requestBody = {};
+    NoteModel item = noteList[index];
+
+    if (item.noteStatus == "UNREAD") {
+      requestBody["status"] = "READ";
+      item.noteStatus = "READ";
+    }
+
+    // Create an instance of RequestController
+    RequestController req =
+        RequestController(path: 'note/update-status/$noteId');
+
+    req.setBody(requestBody);
+    await req.put();
+
+    print(req.result());
+    if (req.status() == 200) {
+      Fluttertoast.showToast(
+        msg: 'Update successfully',
+        backgroundColor: Colors.white,
+        textColor: Colors.red,
+        gravity: ToastGravity.CENTER,
+        toastLength: Toast.LENGTH_SHORT,
+        fontSize: 16.0,
+      );
+    } else {
+      Fluttertoast.showToast(
+        msg: 'Update failed!',
+        backgroundColor: Colors.white,
+        textColor: Colors.red,
+        gravity: ToastGravity.CENTER,
+        toastLength: Toast.LENGTH_SHORT,
+        fontSize: 16.0,
+      );
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -67,7 +139,7 @@ class _ParentHomepageState extends State<ParentHomepage> {
   Future<void> _refreshData() async {
     // Implement the logic to refresh data here
     await fetchParentDetails(); // Call the method to fetch parent details again
-    // You can add more logic to refresh other data as needed
+    await fetchNotesByCaregiver();
   }
 
   @override
@@ -107,11 +179,100 @@ class _ParentHomepageState extends State<ParentHomepage> {
                   content: 'Mon - Fri: 8:00 am - 6:00 pm\nSat - Sun: Closed',
                 ),
                 const SizedBox(height: 20),
-                _buildSection(
-                  icon: Icons.phone,
-                  title: 'Contact Us',
-                  content: '013-267 1413',
-                ),
+                Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Title for the section
+                  Padding(
+                    padding: EdgeInsets.symmetric(vertical: 10.0),
+                    child: Text(
+                      'Notes from Caregiver',
+                      style: GoogleFonts.playfairDisplay(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.black,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  // Container for the notes section
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.lightBlue[50],
+                      borderRadius: BorderRadius.circular(20.0),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.5),
+                          spreadRadius: 5,
+                          blurRadius: 7,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: SizedBox(
+                      height: 300, // Adjust height as needed
+                      child: noteList.isEmpty
+                          ? const Center(
+                              child: Text(
+                                'No Notes',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            )
+                          : ListView.builder(
+                              itemCount: noteList.length,
+                              itemBuilder: (BuildContext context, int index) {
+                                NoteModel item = noteList[index];
+                                return Card(
+                                  elevation: 4,
+                                  margin: const EdgeInsets.symmetric(
+                                      vertical: 8, horizontal: 16),
+                                  child: ListTile(
+                                    title: RichText(
+                                      text: TextSpan(
+                                        style:
+                                            DefaultTextStyle.of(context).style,
+                                        children: <TextSpan>[
+                                          TextSpan(
+                                            text:
+                                                'From: Caregiver ${item.caregiverModel?.caregiverUsername}',
+                                            style: const TextStyle(
+                                                fontWeight: FontWeight.bold),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    subtitle: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(item.noteDetails),
+                                        Text(
+                                            _formatDateTime(item.noteDateTime)),
+                                      ],
+                                    ),
+                                    trailing: Checkbox(
+                                      value: item.noteStatus == 'READ',
+                                      onChanged: (bool? value) {
+                                        setState(() {
+                                          item.noteStatus =
+                                              value! ? 'READ' : 'UNREAD';
+                                        });
+                                        // Call updateSicknessStatus when the checkbox is toggled
+                                        updateNoteStatus(item.noteId,
+                                            index); // Pass index here
+                                      },
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                    ),
+                  ),
+                ],
+              ),
                 const SizedBox(height: 20),
                 Row(
                   children: [
@@ -513,5 +674,10 @@ class _ParentHomepageState extends State<ParentHomepage> {
         },
       ),
     );
+  }
+
+    String _formatDateTime(DateTime dateTime) {
+    // Format the DateTime object in 12-hour system with AM/PM indicator
+    return DateFormat('MMMM dd, yyyy hh:mm a').format(dateTime);
   }
 }

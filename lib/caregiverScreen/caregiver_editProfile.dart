@@ -25,6 +25,7 @@ class _CaregiverEditProfileState extends State<CaregiverEditProfile> {
   String caregiverEmail = '';
   String caregiverPhoneNumber = '';
   int? caregiverId;
+  String errorMessage = '';
 
   Future<Map<String, dynamic>> getCaregiverDetails(String? email) async {
     print('email : $email');
@@ -32,84 +33,48 @@ class _CaregiverEditProfileState extends State<CaregiverEditProfile> {
         RequestController(path: 'caregiver-byEmail?email=$email');
 
     await req.get();
-    var response = req.result();
-    print("${req.status()}");
     if (req.status() == 200) {
-      return response;
+      var response = req.result();
+      print("Response: $response");
+
+      if (response is Map<String, dynamic>) {
+        return response;
+      } else {
+        throw Exception('Unexpected response format');
+      }
     } else {
-      throw Exception('Failed to load parent details');
+      throw Exception('Failed to load caregiver details');
     }
   }
 
-  Future<void> fetchCaregiverDetails() async {
+   Future<void> fetchCaregiverDetails() async {
     try {
-      final data = await getCaregiverDetails(finalEmail!);
+      final data = await getCaregiverDetails(finalEmail); // Use actual email here
       print('Response Data: $data');
       setState(() {
-        caregiverUsername = data['username'];
-        caregiverName = data['name'];
-        caregiverIcNumber = data['ic_number'];
-        caregiverPhoneNumber = data['phone_number'];
-        caregiverEmail = data['email'];
+        caregiverUsername = data['username'] ?? 'Username';
+        caregiverName = data['name'] ?? 'Full Name';
+        caregiverIcNumber = data['ic_number'] ?? 'Ic_number';
+        caregiverPhoneNumber = data['phone_number'] ?? 'Phone Number';
+        caregiverEmail = data['email'] ?? 'Email';
         caregiverId = data['id'];
         print('Fetched Caregiver ID: $caregiverId');
+        
+        // Update text controllers with the fetched data
+        caregiverNameController.text = caregiverName;
+        caregiverUsernameController.text = caregiverUsername;
+        caregiverIcController.text = caregiverIcNumber;
+        caregiverPhoneController.text = caregiverPhoneNumber;
+        caregiverEmailController.text = caregiverEmail;
       });
     } catch (error) {
       print('Error fetching caregiver details: $error');
+      setState(() {
+        errorMessage = 'Failed to load caregiver details';
+      });
     }
   }
 
-  /*  Future<void> caregiverEdit(int? caregiverId) async {
-    String caregiverName = caregiverNameController.text.trim();
-    String caregiverIcNumber = caregiverIcController.text.trim();
-    String caregiverEmail = caregiverEmailController.text.trim();
-    String caregiverUsername = caregiverUsernameController.text.trim();
-    String caregiverPhoneNumber = caregiverPhoneController.text.trim();
-
-    print('Caregiver ID to update: ${caregiverId}');
-    print(
-        'New data - Name: $caregiverName, IC: $caregiverIcNumber, Email: $caregiverEmail, Username: $caregiverUsername, Phone: $caregiverPhoneNumber');
-
-    RequestController req =
-        RequestController(path: 'caregiver/update-profile/$caregiverId');
-
-    await req.setBody({
-      "id": caregiverId,
-      "name": caregiverName,
-      "ic_number": caregiverIcNumber,
-      "phone_number": caregiverPhoneNumber,
-      "email": caregiverEmail,
-      "username": caregiverUsername,
-    });
-
-    print("caregiverId : ${caregiverId}");
-    await req.put();
-
-    print(req.result());
-
-
-    if(req.status() == 200) {
-      Fluttertoast.showToast(
-        msg: "This data failed to be updated",
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.CENTER,
-        timeInSecForIosWeb: 1,
-        backgroundColor: Colors.pinkAccent,
-        textColor: Colors.white,
-        fontSize: 16.0,
-      );
-    } else {
-      Fluttertoast.showToast(
-        msg: "Edit successful",
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.CENTER,
-        timeInSecForIosWeb: 1,
-        backgroundColor: Colors.pinkAccent,
-        textColor: Colors.white,
-        fontSize: 16.0,
-      );
-    }
-  } */
 
   Future<void> caregiverUpdate(
     int? caregiverId,
@@ -131,7 +96,7 @@ class _CaregiverEditProfileState extends State<CaregiverEditProfile> {
     };
 
     // Make sure the requestData contains at least one field to update
-    if (requestData.isEmpty) {
+    if (requestData.length == 1) { // Changed from requestData.isEmpty to requestData.length == 1 to ensure 'id' is excluded
       print("No fields to update");
       return;
     }
@@ -339,40 +304,27 @@ class _CaregiverEditProfileState extends State<CaregiverEditProfile> {
                         ),
                         onPressed: () async {
                           try {
-                            setState(() {
-                              // Get the updated values from text controllers
-                              String newName =
-                                  caregiverNameController.text.trim();
-                              String newUsername =
-                                  caregiverUsernameController.text.trim();
-                              String newIC = caregiverIcController.text.trim();
-                              String newPhone =
-                                  caregiverPhoneController.text.trim();
+                            // Get the updated values from text controllers
+                            String newName = caregiverNameController.text.trim();
+                            String newUsername = caregiverUsernameController.text.trim();
+                            String newIC = caregiverIcController.text.trim();
+                            String newPhone = caregiverPhoneController.text.trim();
 
-                              // Call the update function with existing data for fields that are not being updated
-                              caregiverUpdate(
-                                caregiverId,
-                                caregiverName, // Existing name
-                                caregiverUsername, // Existing username
-                                caregiverIcNumber, // Existing IC number
-                                caregiverPhoneNumber, // Existing phone number
-                                newName: newName.isNotEmpty
-                                    ? newName
-                                    : null, // Updated name if provided
-                                newUsername: newUsername.isNotEmpty
-                                    ? newUsername
-                                    : null, // Updated username if provided
-                                newIC: newIC.isNotEmpty
-                                    ? newIC
-                                    : null, // Updated IC number if provided
-                                newPhone: newPhone.isNotEmpty
-                                    ? newPhone
-                                    : null, // Updated phone number if provided
-                              );
-                            });
+                            // Call the update function with existing data for fields that are not being updated
+                            await caregiverUpdate(
+                              caregiverId,
+                              caregiverName, // Existing name
+                              caregiverUsername, // Existing username
+                              caregiverIcNumber, // Existing IC number
+                              caregiverPhoneNumber, // Existing phone number
+                              newName: newName.isNotEmpty ? newName : null, // Updated name if provided
+                              newUsername: newUsername.isNotEmpty ? newUsername : null, // Updated username if provided
+                              newIC: newIC.isNotEmpty ? newIC : null, // Updated IC number if provided
+                              newPhone: newPhone.isNotEmpty ? newPhone : null, // Updated phone number if provided
+                            );
                             Navigator.pop(context);
                           } catch (e) {
-                            print('Navigation error: $e');
+                            print('Error saving profile: $e');
                           }
                         },
                         child: const Text("Save"),

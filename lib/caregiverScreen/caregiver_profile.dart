@@ -20,21 +20,34 @@ class _CaregiverProfileState extends State<CaregiverProfile> {
   String caregiverEmail = '';
   String caregiverPhoneNumber = '';
   int? caregiverId;
+  String errorMessage = '';
 
-  Future<void> fetchCaregiverDetails() async {
+
+ Future<void> fetchCaregiverDetails() async {
     try {
-      final data = await getCaregiverDetails(finalEmail!);
+      final data = await getCaregiverDetails(finalEmail); // Use actual email here
       print('Response Data: $data');
       setState(() {
-        caregiverUsername = data['username'];
-        caregiverName = data['name'];
-        caregiverIcNumber = data['ic_number'];
-        caregiverPhoneNumber = data['phone_number'];
-        caregiverEmail = data['email'];
+        caregiverUsername = data['username'] ?? 'Unknown';
+        caregiverName = data['name'] ?? 'Unknown';
+        caregiverIcNumber = data['ic_number'] ?? 'Unknown';
+        caregiverPhoneNumber = data['phone_number'] ?? 'Unknown';
+        caregiverEmail = data['email'] ?? 'Unknown';
         caregiverId = data['id'];
+        print('Fetched Caregiver ID: $caregiverId');
+        
+        // Update text controllers with the fetched data
+        caregiverName = caregiverName;
+        caregiverUsername = caregiverUsername;
+        caregiverIcNumber = caregiverIcNumber;
+        caregiverPhoneNumber = caregiverPhoneNumber;
+        caregiverEmail = caregiverEmail;
       });
     } catch (error) {
-      print('Error fetching caregiver details: $error'); // Print error to debug
+      print('Error fetching caregiver details: $error');
+      setState(() {
+        errorMessage = 'Failed to load caregiver details';
+      });
     }
   }
 
