@@ -4,8 +4,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class RequestController {
   String path;
-  String server = "http://192.168.157.11:8000/api/";
-  //String server = "http://10.131.77.183:8000/api/";
+  //String server = "http://192.168.157.11:8000/api/";
+  String server = "http://192.168.218.11:8000/api/";
   http.Response? _res;
   final Map<dynamic, dynamic> _body = {};
   final Map<String, String> _headers = {};

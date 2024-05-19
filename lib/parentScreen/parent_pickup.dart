@@ -44,8 +44,7 @@ class _ParentPickupState extends State<ParentPickup> {
               childData['id'].toString()), // Ensure child ID is parsed as int
           childName: childData['name'],
           childMykidNumber: childData['my_kid_number'],
-          childAge: int.tryParse(
-              childData['age'].toString()), // Ensure age is parsed as int
+          childDOB: childData['date_of_birth'], // Ensure age is parsed as int
           childGender: childData['gender'],
           childAllergies: childData['allergy'],
           parentId: int.tryParse(childData['guardian_id']

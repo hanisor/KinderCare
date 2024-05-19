@@ -100,7 +100,7 @@ class _CaregiverProfileState extends State<CaregiverProfile> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Parent Profile'),
+        title: const Text('Caregiver Profile'),
       ),
       body: RefreshIndicator(
         onRefresh: _refresh,

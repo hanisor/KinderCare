@@ -16,12 +16,12 @@ class ChildEditProfile extends StatefulWidget {
 class _ChildEditProfileState extends State<ChildEditProfile> {
   TextEditingController childNameController = TextEditingController();
   TextEditingController childMykidNumberController = TextEditingController();
-  TextEditingController childAgeController = TextEditingController();
+  TextEditingController childDOBController = TextEditingController();
   TextEditingController childGenderController = TextEditingController();
   TextEditingController childAllergiesController = TextEditingController();
   String childName = '';
   String childMykidNumber = '';
-  String childAge = '';
+  String childDOB = '';
   String childGender = '';
   String childAllergies = '';
   String childId = '';
@@ -41,12 +41,12 @@ class _ChildEditProfileState extends State<ChildEditProfile> {
       final data = await getChildrenDetails(widget.childId);
       print('Response Data: $data');
       setState(() {
-        childMykidNumber = data['childMykidNumber'];
-        childName = data['childName'];
-        childAge = data['childAge'];
-        childGender = data['childGender'];
-        childAllergies = data['childAllergies'];
-        childId = data['childId'];
+        childMykidNumber = data['my_kid_number'];
+        childName = data['name'];
+        childDOB = data['date_of_birth'];
+        childGender = data['gender'];
+        childAllergies = data['allergy'];
+        childId = data['id'];
         print('Fetched child ID: $childId');
       });
     } catch (error) {
@@ -55,16 +55,16 @@ class _ChildEditProfileState extends State<ChildEditProfile> {
   }
 
   Future<void> childUpdate(String childId, String currentName,
-      String currentMykidNumber, String currentAge, String currentGender,
+      String currentMykidNumber, String currentDOB, String currentGender,
       String currentAllergies, {String? newName, String? newMykidNumber,
-        String? newAge, String? newGender, String? newALlergies}) async {
+        String? newDOB, String? newGender, String? newAllergies}) async {
     Map<String, dynamic> requestData = {
-      "childId": childId,
-      "childName": newName ?? currentName, // If newName is null, use currentName
-      "childMykidNumber": newMykidNumber ?? currentMykidNumber,
-      "childAge": newAge ?? currentAge,
-      "childGender": newGender ?? currentGender,
-      "childAllergies": newALlergies ?? currentAllergies,
+      "id": childId,
+      "name": newName ?? currentName, // If newName is null, use currentName
+      "my_kid_number": newMykidNumber ?? currentMykidNumber,
+      "date_of_birth": newDOB ?? currentDOB,
+      "gender": newGender ?? currentGender,
+      "allergy": newAllergies ?? currentAllergies,
     };
 
     var url = Uri.parse("http://172.20.10.3/xampp/fyp/child_controller_layer/update_child.php");
@@ -108,7 +108,7 @@ class _ChildEditProfileState extends State<ChildEditProfile> {
   void dispose() {
     childNameController.dispose();
     childMykidNumberController.dispose();
-    childAgeController.dispose();
+    childDOBController.dispose();
     childGenderController.dispose();
     childAllergiesController.dispose();
     super.dispose();
@@ -118,7 +118,7 @@ class _ChildEditProfileState extends State<ChildEditProfile> {
   void initState() {
     childNameController = TextEditingController(text:'');
     childMykidNumberController = TextEditingController(text:'');
-    childAgeController = TextEditingController(text:'');
+    childDOBController = TextEditingController(text:'');
     childGenderController = TextEditingController(text:'');
     childAllergiesController = TextEditingController(text: '');
     fetchChildrenDetails();
@@ -194,9 +194,9 @@ class _ChildEditProfileState extends State<ChildEditProfile> {
                           borderRadius: BorderRadius.circular(50.0),
                         ),
                         prefixIcon: const Icon(Icons.description),
-                        hintText: '$childAge',
+                        hintText: '$childDOB',
                       ),
-                      controller: childAgeController,
+                      controller: childDOBController,
                     ),
                   ),
                   Padding(
@@ -247,23 +247,23 @@ class _ChildEditProfileState extends State<ChildEditProfile> {
                               // Get the updated values from text controllers
                               String newName = childNameController.text.trim();
                               String newMykidNumber = childMykidNumberController.text.trim();
-                              String newAge = childAgeController.text.trim();
+                              String newDOB = childDOBController.text.trim();
                               String newGender = childGenderController.text.trim();
-                              String newALlergies = childAllergiesController.text.trim();
+                              String newAllergies = childAllergiesController.text.trim();
 
                               // Call the update function with existing data for fields that are not being updated
                               childUpdate(
                                 childId,
                                 childName, // Existing name
                                 childMykidNumber, // Existing username
-                                childAge, // Existing IC number
+                                childDOB, // Existing IC number
                                 childGender, // Existing phone number
                                 childAllergies, // Existing email
                                 newName: newName.isNotEmpty ? newName : null, // Updated name if provided
                                 newMykidNumber: newMykidNumber.isNotEmpty ? newMykidNumber : null, // Updated username if provided
-                                newAge: newAge.isNotEmpty ? newAge : null, // Updated IC number if provided
+                                newDOB: newDOB.isNotEmpty ? newDOB : null, // Updated IC number if provided
                                 newGender: newGender.isNotEmpty ? newGender : null, // Updated phone number if provided
-                                newALlergies: newALlergies.isNotEmpty ? newALlergies : null, // Updated email if provided
+                                newAllergies: newAllergies.isNotEmpty ? newAllergies : null, // Updated email if provided
                               );
                             });
 

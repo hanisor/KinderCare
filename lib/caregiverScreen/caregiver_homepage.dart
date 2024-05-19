@@ -61,7 +61,7 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
     }
   }
 
-  Future<void> fetchNotesByParent() async {
+  Future<void> fetchNotesByCaregiver() async {
     RequestController req = RequestController(
         path: 'note/sendby-parent'); // Pass email as parameter
 
@@ -139,7 +139,7 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
   Future<void> _refresh() async {
     // Call fetchCaregiverDetails and fetchNotesByParentId again
     await fetchCaregiverDetails();
-    await fetchNotesByParent();
+    await fetchNotesByCaregiver();
   }
 
   @override

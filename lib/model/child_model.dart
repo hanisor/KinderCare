@@ -3,7 +3,7 @@ import 'package:flutter/src/material/list_tile.dart';
 class ChildModel {
   int? childId; // Change type to int
   final String childName;
-  int? childAge;
+  final String childDOB;
   final String childGender;
   final String childMykidNumber;
   final String childAllergies;
@@ -12,7 +12,7 @@ class ChildModel {
   ChildModel({
     this.childId,
     required this.childName,
-    required this.childAge,
+    required this.childDOB,
     required this.childGender,
     required this.childMykidNumber,
     required this.childAllergies,
@@ -25,7 +25,7 @@ class ChildModel {
       childId: json['id'] as int,
       childName: json['name'] as String,
       childMykidNumber: json['my_kid_number'] as String,
-      childAge: json['age'] as int,
+      childDOB: json['date_of_birth'] as String,
       childGender: json['gender'] as String,
       childAllergies: json['allergy'] as String,
       parentId: json['guardian_id'] as int,
@@ -37,7 +37,7 @@ class ChildModel {
 
   String get getChildName => childName;
 
-  int? get getChildAge => childAge;
+  String get getChildDOB => childDOB;
 
   String get getChildGender => childGender;
 

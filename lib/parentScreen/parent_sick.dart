@@ -38,7 +38,7 @@ class _ParentSicknessState extends State<ParentSickness> {
           childrenList = List<ChildModel>.from(childrenData.map((x) => ChildModel(
                 childId: int.tryParse(x['id'].toString()),
                 childName: x['name'] as String,
-                childAge: x['age'] as int,
+                childDOB: x['date_of_birth'] as String,
                 childGender: x['gender'] as String,
                 childMykidNumber: x['my_kid_number'] as String,
                 childAllergies: x['allergy'] as String,
@@ -218,7 +218,7 @@ class _ParentSicknessState extends State<ParentSickness> {
                   children: [
                     const SizedBox(height: 20),
                     Text(
-                      "Child Age: ${selectedChild!.childAge}",
+                      "Child Date Of Birth: ${selectedChild!.childDOB}",
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,

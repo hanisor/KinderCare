@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:kindercare/caregiverScreen/add_session.dart';
-import 'package:kindercare/caregiverScreen/caregiver_homepage.dart';
 import 'package:kindercare/request_controller.dart';
 
 class ChildRegistration extends StatefulWidget {
@@ -15,7 +14,7 @@ class ChildRegistration extends StatefulWidget {
 class _ChildRegistrationState extends State<ChildRegistration> {
   var childNameEditCtrl = TextEditingController();
   var childMyKidEditCtrl = TextEditingController();
-  var childAgeEditCtrl = TextEditingController();
+  var childDOBEditCtrl = TextEditingController();
   var childAllergiesEditCtrl = TextEditingController();
   var childGenderEditCtrl = TextEditingController();
 
@@ -62,13 +61,13 @@ class _ChildRegistrationState extends State<ChildRegistration> {
   Future<void> childRegister() async {
     String childName = childNameEditCtrl.text.trim();
     String childMyKid = childMyKidEditCtrl.text.trim();
-    String childAge = childAgeEditCtrl.text.trim();
+    String childDOB = childDOBEditCtrl.text.trim();
     String childAllergy = childAllergiesEditCtrl.text.trim();
     String childGender = childGenderEditCtrl.text.trim();
 
     if (childName.isEmpty ||
         childMyKid.isEmpty ||
-        childAge.isEmpty ||
+        childDOB.isEmpty ||
         childAllergy.isEmpty ||
         childGender.isEmpty) {
       _showRegistrationFailedDialog(context, 'Please fill in all the details');
@@ -79,7 +78,7 @@ class _ChildRegistrationState extends State<ChildRegistration> {
       req.setBody({
         "name": childName,
         "my_kid_number": childMyKid,
-        "age": childAge,
+        "date_of_birth": childDOB,
         "allergy": childAllergy,
         "gender": childGender,
         "guardian_id": widget.parentId,
@@ -189,9 +188,9 @@ class _ChildRegistrationState extends State<ChildRegistration> {
                           borderRadius: BorderRadius.circular(30.0),
                         ),
                         prefixIcon: const Icon(Icons.cake),
-                        hintText: 'Enter child age',
+                        hintText: 'Enter child date of birth',
                       ),
-                      controller: childAgeEditCtrl,
+                      controller: childDOBEditCtrl,
                     ),
                   ),
                   Padding(
