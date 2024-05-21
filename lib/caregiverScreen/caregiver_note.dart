@@ -139,49 +139,6 @@ class _CaregiverNoteState extends State<CaregiverNote> {
     }
   }
 
-  /* Future<void> fetchNotesBycaregiverId(int? caregiverId) async {
-    RequestController req = RequestController(
-        path: 'note/by-caregiverId/$caregiverId'); // Pass email as parameter
-    print("caregiverId : ${widget.caregiverId!}");
-    await req.get();
-    var response = req.result();
-    if (response != null && response.containsKey('notes')) {
-      var noteData = response['notes'];
-      print("JSON Data: $noteData"); // Print JSON data for debugging
-      setState(() {
-        noteList = List<NoteModel>.from(noteData.map((x) {
-          // Ensure noteId is parsed as an integer
-          x['id'] = int.tryParse(x['id'].toString());
-          print("noteId: ${x['id']}"); // Debug noteId
-          print("noteStatus: ${x['status']}"); // Debug noteStatus
-          return NoteModel.fromJson(x);
-        }));
-
-        // Filter notes with status "unread"
-        noteList = noteList
-            .where((note) =>
-                note.noteStatus == 'UNREAD' &&
-                DateTime.now().difference(note.noteDateTime).inDays <= 1)
-            .toList();
-
-        // Sort notes by date time (optional)
-        noteList.sort((a, b) => a.noteDateTime.compareTo(b.noteDateTime));
-
-        print("Updated noteList: $noteList"); // Print updated noteList
-
-        print("Updated noteList: $noteList"); // Print updated noteList
-      });
-    }
-  }
- */
-
-  // // Method to delete a note
-  // void deleteNoteAtIndex(int index) {
-  //   setState(() {
-  //     details.removeAt(index);
-  //   });
-  // }
-
   @override
   void initState() {
     super.initState();
