@@ -1,4 +1,5 @@
-import 'package:flutter/src/material/list_tile.dart';
+import 'package:flutter/material.dart';
+import 'package:kindercare/model/performance_model.dart';
 
 class ChildModel {
   int? childId; // Change type to int
@@ -8,6 +9,7 @@ class ChildModel {
   final String childMykidNumber;
   final String childAllergies;
   int? parentId;
+  List<PerformanceModel> performances; // Add this line
 
   ChildModel({
     this.childId,
@@ -17,6 +19,7 @@ class ChildModel {
     required this.childMykidNumber,
     required this.childAllergies,
     this.parentId,
+    required this.performances, // Add this line
   });
 
   // Factory constructor to create a ChildModel from JSON
@@ -29,23 +32,21 @@ class ChildModel {
       childGender: json['gender'] as String,
       childAllergies: json['allergy'] as String,
       parentId: json['guardian_id'] as int,
+      performances: (json['performances'] as List<dynamic>)
+          .map((e) => PerformanceModel.fromJson(e as Map<String, dynamic>))
+          .toList(), // Add this line
     );
   }
 
   // Getters
   int? get getChildId => childId;
-
   String get getChildName => childName;
-
   String get getChildDOB => childDOB;
-
   String get getChildGender => childGender;
-
   String get getChildMykidNumber => childMykidNumber;
-
   String get getChildAllergies => childAllergies;
-
   int? get getParentId => parentId;
+  List<PerformanceModel> get getPerformances => performances; // Add this line
 
   // Setters
   set setChildId(int? newId) {
@@ -53,5 +54,4 @@ class ChildModel {
   }
 
   map(ListTile Function(dynamic child) param0) {}
-// You can create setters for other fields in a similar manner if needed
 }

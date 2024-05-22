@@ -48,7 +48,7 @@ class _ParentPickupState extends State<ParentPickup> {
           childGender: childData['gender'],
           childAllergies: childData['allergy'],
           parentId: int.tryParse(childData['guardian_id']
-              .toString()), // Ensure guardian_id is parsed as int
+              .toString()), performances: [], // Ensure guardian_id is parsed as int
         );
       }).toList();
 

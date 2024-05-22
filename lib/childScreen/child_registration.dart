@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:kindercare/caregiverScreen/add_session.dart';
 import 'package:kindercare/request_controller.dart';
 
 class ChildRegistration extends StatefulWidget {
@@ -257,11 +256,7 @@ class _ChildRegistrationState extends State<ChildRegistration> {
                           onPressed: () {
                             childRegister();
                             Future.delayed(const Duration(seconds: 2), () {
-                              Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) =>
-                                          AddSession()));
+                              
                             });
                           },
                           child: const Text("Done"),

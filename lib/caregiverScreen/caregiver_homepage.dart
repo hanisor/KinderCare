@@ -5,9 +5,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:kindercare/caregiverScreen/caregiver_attendance.dart';
 import 'package:kindercare/caregiverScreen/caregiver_behaviorReport.dart';
-import 'package:kindercare/caregiverScreen/caregiver_behaviour.dart';
 import 'package:kindercare/caregiverScreen/caregiver_note.dart';
-import 'package:kindercare/caregiverScreen/caregiver_performance.dart';
+import 'package:kindercare/caregiverScreen/caregiver_performanceReport.dart';
 import 'package:kindercare/caregiverScreen/caregiver_pickup.dart';
 import 'package:kindercare/caregiverScreen/caregiver_profile.dart';
 import 'package:kindercare/caregiverScreen/caregiver_sick.dart';
@@ -577,7 +576,7 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => const CaregiverPerformance()),
+                            builder: (context) => CaregiverPerformanceReport(caregiverId: caregiverId)),
                       );
                     },
                     child: Container(
