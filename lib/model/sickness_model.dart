@@ -21,7 +21,7 @@ class SicknessModel {
     this.childModel,
   });
 
-  factory SicknessModel.fromJson(Map<String, dynamic> json) {
+  factory SicknessModel.fromJson(Map<String, dynamic> json, {ChildModel? childModel}) {
     return SicknessModel(
       sicknessId: json['id'],
       sicknessType: json['type'],
@@ -29,7 +29,7 @@ class SicknessModel {
       dateTime: json['date_time'],
       sicknessStatus: json['status'],
       childId: json['child_id'],
-      childModel: json['child'] != null ? ChildModel.fromJson(json['child']) : null, // Parse child data
+      childModel: childModel, // Use the passed childModel
     );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:kindercare/caregiverScreen/caregiver_performance.dart';
 import 'package:kindercare/model/performance_model.dart';
 import 'package:kindercare/request_controller.dart';
@@ -15,7 +16,8 @@ class CaregiverPerformanceReport extends StatefulWidget {
 
 class _CaregiverPerformanceReportState
     extends State<CaregiverPerformanceReport> {
-  Map<String, List<PerformanceModel>> performanceByMonth = {};
+  Map<String, Map<String, Map<String, List<PerformanceModel>>>>
+      performanceByMonthAndAge = {};
   bool isLoading = false;
 
   @override
@@ -35,39 +37,74 @@ class _CaregiverPerformanceReportState
       await req.get();
       var response = req.result();
 
+      print("Raw response: $response"); // Debug statement
+
       if (response != null && response is Map<String, dynamic>) {
         final responseData = response;
         final childGroup = responseData['child_group'];
 
+        print("Parsed child group: $childGroup"); // Debug statement
+
         setState(() {
-          performanceByMonth.clear();
+          performanceByMonthAndAge.clear();
 
           if (childGroup is List) {
-            childGroup.forEach((childGroupItem) {
+            for (var childGroupItem in childGroup) {
               final child = childGroupItem['child'];
-              final performances = childGroupItem['child']['performances'];
+              final performances = child['performances'];
+              final dob = child['date_of_birth'];
+              print("DOB: $dob");
 
-              if (child != null && performances is List) {
-                final childName = child['name'] as String?;
+              if (child != null &&
+                  performances is List &&
+                  dob != null &&
+                  dob is String &&
+                  dob.isNotEmpty) {
+                try {
+                  final childName = child['name'] as String?;
+                  final age = _calculateAge(dob); // Pass the dob string
 
-                performances.forEach((performance) {
-                  PerformanceModel performanceModel =
-                      PerformanceModel.fromJson(performance);
-                  performanceModel.childName = childName ?? 'Unknown Child';
+                  print("DOB: $dob, Age: $age");
 
-                  final date = performanceModel.date;
-                  if (date != null && date.isNotEmpty) {
-                    final parsedDate = DateTime.parse(date);
-                    final monthYear = DateFormat('MMMM yyyy').format(parsedDate);
+                  for (var performance in performances) {
+                    PerformanceModel performanceModel =
+                        PerformanceModel.fromJson(performance);
+                    performanceModel.childName = childName ?? 'Unknown Child';
 
-                    if (!performanceByMonth.containsKey(monthYear)) {
-                      performanceByMonth[monthYear] = [];
+                    final date = performanceModel.date;
+                    if (date.isNotEmpty) {
+                      final parsedDate = DateTime.parse(date);
+                      final monthYear =
+                          DateFormat('MMMM yyyy').format(parsedDate);
+                      final day = DateFormat('dd').format(parsedDate);
+
+                      if (!performanceByMonthAndAge.containsKey(monthYear)) {
+                        performanceByMonthAndAge[monthYear] = {};
+                      }
+
+                      if (!performanceByMonthAndAge[monthYear]!
+                          .containsKey(age.toString())) {
+                        performanceByMonthAndAge[monthYear]![age.toString()] =
+                            {};
+                      }
+
+                      if (!performanceByMonthAndAge[monthYear]![age.toString()]!
+                          .containsKey(childName)) {
+                        performanceByMonthAndAge[monthYear]![age.toString()]![
+                            childName!] = [];
+                      }
+
+                      performanceByMonthAndAge[monthYear]![age.toString()]![
+                              childName]!
+                          .add(performanceModel);
                     }
-                    performanceByMonth[monthYear]?.add(performanceModel);
                   }
-                });
+                } catch (e) {
+                  print("Error processing child: $e");
+                  continue; // Skip processing this child if an error occurs
+                }
               }
-            });
+            }
           }
         });
       } else {
@@ -82,6 +119,17 @@ class _CaregiverPerformanceReportState
     }
   }
 
+  int _calculateAge(String dobString) {
+    final dob = DateFormat('dd/MM/yyyy').parse(dobString);
+    final now = DateTime.now();
+    int age = now.year - dob.year;
+    if (now.month < dob.month ||
+        (now.month == dob.month && now.day < dob.day)) {
+      age--;
+    }
+    return age;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -94,8 +142,8 @@ class _CaregiverPerformanceReportState
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (context) =>
-                        CaregiverPerformance(caregiverId: widget.caregiverId)),
+                  builder: (context) =>
+                      CaregiverPerformance(caregiverId: widget.caregiverId)),
               );
             },
           ),
@@ -106,26 +154,108 @@ class _CaregiverPerformanceReportState
         child: isLoading
             ? Center(child: CircularProgressIndicator())
             : ListView.builder(
-                itemCount: performanceByMonth.keys.length,
+                itemCount: performanceByMonthAndAge.keys.length,
                 itemBuilder: (context, index) {
-                  final monthYear = performanceByMonth.keys.elementAt(index);
-                  final performances = performanceByMonth[monthYear] ?? [];
+                  final monthYear =
+                      performanceByMonthAndAge.keys.elementAt(index);
+                  final performancesByAge =
+                      performanceByMonthAndAge[monthYear] ?? {};
 
-                  return Card(
-                    child: ExpansionTile(
-                      title: Text(monthYear),
-                      children: performances.map((performance) {
-                        return ListTile(
-                          title: Text(performance.childName ?? 'Unknown Child'),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Skill: ${performance.skill}'),
-                              Text('Level: ${performance.level}'),
-                            ],
+                  return Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Card(
+                      color: Colors.pink[50],
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15.0),
+                      ),
+                      child: ExpansionTile(
+                        title: Text(
+                          monthYear,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
                           ),
-                        );
-                      }).toList(),
+                        ),
+                        children: performancesByAge.keys.map((age) {
+                          final performancesByChild =
+                              performancesByAge[age.toString()] ?? {};
+
+                          // Sort the children by day of the month
+                          final sortedChildren = performancesByChild.keys
+                              .toList()
+                            ..sort((a, b) {
+                              final firstDate = DateTime.parse(
+                                  performancesByChild[a]!.first.date);
+                              final secondDate = DateTime.parse(
+                                  performancesByChild[b]!.first.date);
+                              return firstDate.day.compareTo(secondDate.day);
+                            });
+
+                          return Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Card(
+                              color: Colors.blue[50],
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(15.0),
+                              ),
+                              child: ExpansionTile(
+                                title: Text(
+                                  'Age: $age',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                children: sortedChildren.map((childName) {
+                                  final performances =
+                                      performancesByChild[childName]!;
+                                  performances.sort((a, b) =>
+                                      DateTime.parse(a.date)
+                                          .compareTo(DateTime.parse(b.date)));
+                                  return Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Card(
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(15.0),
+                                      ),
+                                      child: ExpansionTile(
+                                        title: Text(childName),
+                                        children: performances.map((performance) {
+                                          return Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                                vertical: 4.0),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                    'Date: ${DateFormat('dd/MM/yyyy').format(DateTime.parse(performance.date))}'),
+                                                Text('Skill: ${performance.skill}'),
+                                                RatingBarIndicator(
+                                                  rating: double.tryParse(
+                                                          performance.level) ??
+                                                      0,
+                                                  itemBuilder:
+                                                      (context, index) => Icon(
+                                                    Icons.star,
+                                                    color: Colors.amber,
+                                                  ),
+                                                  itemCount: 5,
+                                                  itemSize: 20.0,
+                                                  direction: Axis.horizontal,
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                        }).toList(),
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
                     ),
                   );
                 },

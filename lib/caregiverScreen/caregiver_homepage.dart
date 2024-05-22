@@ -426,7 +426,7 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => const CaregiverSickness()),
+                            builder: (context) => CaregiverSickness(caregiverId: caregiverId)),
                       );
                     },
                     child: Container(

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:kindercare/caregiverScreen/caregiver_behaviour.dart';
 import 'package:kindercare/model/behaviour_model.dart';
+import 'package:kindercare/model/child_model.dart';
 import 'package:kindercare/request_controller.dart';
+import 'package:intl/intl.dart';
 
 class CaregiverBehaviourReport extends StatefulWidget {
   final int? caregiverId;
@@ -14,6 +16,7 @@ class CaregiverBehaviourReport extends StatefulWidget {
 
 class _CaregiverBehaviourReportState extends State<CaregiverBehaviourReport> {
   List<BehaviourModel> behaviourList = [];
+  Map<String, Map<int, List<BehaviourModel>>> groupedBehaviourMap = {};
 
   @override
   void initState() {
@@ -24,65 +27,82 @@ class _CaregiverBehaviourReportState extends State<CaregiverBehaviourReport> {
 
   Future<void> fetchChildBehavioursByCaregiverId() async {
     try {
-      // Make an HTTP GET request to fetch child behaviours by caregiver ID
       RequestController req =
           RequestController(path: 'behaviour/${widget.caregiverId}');
-
       await req.get();
       var response = req.result();
+
       if (response != null) {
         if (response is Map<String, dynamic>) {
-          // If the request is successful, parse the JSON response
           final responseData = response as Map<String, dynamic>;
           final childGroup = responseData['child_group'];
 
           setState(() {
-            // Clear existing behaviour list
             behaviourList.clear();
+            groupedBehaviourMap.clear();
 
-            // Process the child group data
             childGroup.forEach((childGroupItem) {
               final child = childGroupItem['child'];
-              final behaviours = childGroupItem['child']['behaviours'];
-              print('listeeee: $behaviours');
-              print('chilfddd: $child');
+              final behaviours = child['behaviours'];
+              final childModel = ChildModel.fromJson(child);
 
+              behaviours.forEach((behaviour) {
+                BehaviourModel behaviourModel =
+                    BehaviourModel.fromJson(behaviour, childModel: childModel);
 
-              // Check if child and behaviours are not null
-              if (child != null && behaviours != null) {
-                // Get the child's name
-                final childName = child['name'];
+                String date = DateFormat('yyyy-MM-dd')
+                    .format(DateTime.parse(behaviourModel.dateTime));
+                final dateOfBirthString = child['date_of_birth'];
+                if (dateOfBirthString != null) {
+                  try {
+                    final dob =
+                        DateFormat('yyyy-MM-dd').parse(dateOfBirthString);
+                    final now = DateTime.now();
+                    final age = now.year -
+                        dob.year -
+                        (now.month >= dob.month && now.day >= dob.day ? 0 : 1);
 
-                // Process behaviour details
-                behaviours.forEach((behaviour) {
-                  // Create BehaviourModel object from JSON data
-                  BehaviourModel behaviourModel = BehaviourModel(
-                    type: behaviour['type'],
-                    description: behaviour['description'],
-                    dateTime: behaviour['date_time'],
-                  );
+                    if (groupedBehaviourMap[date] == null) {
+                      groupedBehaviourMap[date] = {};
+                    }
+                    if (groupedBehaviourMap[date]![age] == null) {
+                      groupedBehaviourMap[date]![age] = [];
+                    }
+                    groupedBehaviourMap[date]![age]!.add(behaviourModel);
+                  } catch (_) {
+                    try {
+                      final dob =
+                          DateFormat('MM/dd/yyyy').parse(dateOfBirthString);
+                      final now = DateTime.now();
+                      final age = now.year -
+                          dob.year -
+                          (now.month >= dob.month && now.day >= dob.day
+                              ? 0
+                              : 1);
 
-                  // Add the child's name to the behaviour model
-                  behaviourModel.childName = childName;
-
-                  // Add behaviour to the list
-                  behaviourList.add(behaviourModel);
-                  print('listeeee: $behaviourList');
-                });
-              }
+                      if (groupedBehaviourMap[date] == null) {
+                        groupedBehaviourMap[date] = {};
+                      }
+                      if (groupedBehaviourMap[date]![age] == null) {
+                        groupedBehaviourMap[date]![age] = [];
+                      }
+                      groupedBehaviourMap[date]![age]!.add(behaviourModel);
+                    } catch (error) {
+                      print('Invalid date of birth format: $dateOfBirthString');
+                    }
+                  }
+                }
+              });
             });
           });
         } else {
-          // If the request fails, print the error message
           print(
               'Failed to fetch child groups and behaviours: ${response.toString()}');
         }
       } else {
-        // If no response received, print an error message
         print('No response received');
       }
     } catch (error) {
-      // If an error occurs during the request, print the error message
       print('Failed to fetch child groups and behaviours: $error');
     }
   }
@@ -91,7 +111,9 @@ class _CaregiverBehaviourReportState extends State<CaregiverBehaviourReport> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Behaviour Report'),
+        title: Text(
+          'Behaviour Report',
+        ),
         actions: [
           IconButton(
             icon: Icon(Icons.playlist_add),
@@ -107,19 +129,71 @@ class _CaregiverBehaviourReportState extends State<CaregiverBehaviourReport> {
         ],
       ),
       body: ListView.builder(
-        itemCount: behaviourList.length,
-        itemBuilder: (context, index) {
-          // Build card for each behaviour
-          return Card(
-            child: ListTile(
-              title: Text(behaviourList[index].childName ?? 'Unknown Child'), // Display child name
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Behaviour: ${behaviourList[index].type}'),
-                  Text('Description: ${behaviourList[index].description}'),
-                  Text('Date: ${behaviourList[index].dateTime}'),
-                ],
+        itemCount: groupedBehaviourMap.length,
+        itemBuilder: (BuildContext context, int index) {
+          String date = groupedBehaviourMap.keys.elementAt(index);
+          Map<int, List<BehaviourModel>> ageGroupMap =
+              groupedBehaviourMap[date]!;
+          return Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Card(
+              color: Colors.pink[50],
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15.0),
+              ),
+              child: ExpansionTile(
+                title: Text(
+                  date,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                children: ageGroupMap.entries.map((entry) {
+                  int age = entry.key;
+                  List<BehaviourModel> behaviours = entry.value;
+                  return Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Card(
+                      color: Colors.blue[50],
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15.0),
+                      ),
+                      child: ExpansionTile(
+                        title: Text(
+                          'Age: $age',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        children: behaviours.map((behaviour) {
+                          return ListTile(
+                            title: Text(
+                              behaviour.childName ?? 'Unknown Child',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Behaviour: ${behaviour.type}',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                                Text(
+                                  'Description: ${behaviour.description}',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                                Text(
+                                  'Time: ${DateFormat('HH:mm').format(DateTime.parse(behaviour.dateTime))}',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  );
+                }).toList(),
               ),
             ),
           );

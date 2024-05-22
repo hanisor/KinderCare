@@ -7,10 +7,10 @@ class BehaviourModel {
   final String dateTime;
   int? childId;
   ChildModel? childModel;
-  String? _childName; // Add childName property
+  String? _childName;
 
   // Getter for childName
-  String? get childName => _childName;
+  String? get childName => _childName ?? childModel?.childName;
 
   // Setter for childName
   set childName(String? value) {
@@ -26,14 +26,14 @@ class BehaviourModel {
     this.childModel,
   });
 
-  factory BehaviourModel.fromJson(Map<String, dynamic> json) {
+  factory BehaviourModel.fromJson(Map<String, dynamic> json, {ChildModel? childModel}) {
     return BehaviourModel(
       id: json['id'],
       type: json['type'],
-      description: json['dosage'],
+      description: json['description'],
       dateTime: json['date_time'],
       childId: json['child_id'],
-      childModel: json['child'] != null ? ChildModel.fromJson(json['child']) : null,
+      childModel: childModel,
     );
   }
 }

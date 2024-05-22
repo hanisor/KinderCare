@@ -42,7 +42,8 @@ class _ParentSicknessState extends State<ParentSickness> {
                 childGender: x['gender'] as String,
                 childMykidNumber: x['my_kid_number'] as String,
                 childAllergies: x['allergy'] as String,
-                parentId: widget.parentId, performances: [],
+                parentId: widget.parentId, 
+                performances: [],
               )));
           // Set selectedChild if the list is not empty
           if (childrenList.isNotEmpty) {

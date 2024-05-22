@@ -22,21 +22,30 @@ class ChildModel {
     required this.performances, // Add this line
   });
 
+  
+
   // Factory constructor to create a ChildModel from JSON
-  factory ChildModel.fromJson(Map<String, dynamic> json) {
-    return ChildModel(
-      childId: json['id'] as int,
-      childName: json['name'] as String,
-      childMykidNumber: json['my_kid_number'] as String,
-      childDOB: json['date_of_birth'] as String,
-      childGender: json['gender'] as String,
-      childAllergies: json['allergy'] as String,
-      parentId: json['guardian_id'] as int,
-      performances: (json['performances'] as List<dynamic>)
-          .map((e) => PerformanceModel.fromJson(e as Map<String, dynamic>))
-          .toList(), // Add this line
-    );
+factory ChildModel.fromJson(Map<String, dynamic> json) {
+  List<PerformanceModel> performances = [];
+
+  if (json['performances'] != null && json['performances'] is List) {
+    performances = (json['performances'] as List)
+        .map((e) => PerformanceModel.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
+
+  return ChildModel(
+    childId: json['id'] as int,
+    childName: json['name'] as String,
+    childMykidNumber: json['my_kid_number'] as String,
+    childDOB: json['date_of_birth'] as String,
+    childGender: json['gender'] as String,
+    childAllergies: json['allergy'] as String,
+    parentId: json['guardian_id'] as int,
+    performances: performances,
+  );
+}
+
 
   // Getters
   int? get getChildId => childId;

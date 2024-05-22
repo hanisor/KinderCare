@@ -517,7 +517,7 @@ class _ParentHomepageState extends State<ParentHomepage> {
                         Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (context) => ParentBehaviour()));
+                                builder: (context) => ParentBehaviour(parentId: parentId)));
                       },
                       child: Container(
                         width: 130,
@@ -562,7 +562,7 @@ class _ParentHomepageState extends State<ParentHomepage> {
                         Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (context) => ParentPerformance()));
+                                builder: (context) => ParentPerformance(parentId: parentId)));
                       },
                       child: Container(
                         width: 170,

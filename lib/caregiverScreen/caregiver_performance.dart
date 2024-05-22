@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kindercare/caregiverScreen/caregiver_performanceReport.dart';
 import 'package:kindercare/model/child_model.dart';
 import 'package:kindercare/request_controller.dart';
 import 'package:intl/intl.dart'; // Add this import
@@ -100,7 +101,7 @@ class _CaregiverPerformanceState extends State<CaregiverPerformance> {
                       childGender: x['gender'] as String,
                       childMykidNumber: x['my_kid_number'] as String,
                       childAllergies: x['allergy'] as String,
-                      parentId: int.tryParse(x['guardian_id'].toString()) ?? 0, 
+                      parentId: int.tryParse(x['guardian_id'].toString()) ?? 0,
                       performances: [],
                     )));
 
@@ -338,6 +339,12 @@ class _CaregiverPerformanceState extends State<CaregiverPerformance> {
                     if (_formKey.currentState!.validate()) {
                       _formKey.currentState!.save();
                       addPerformance();
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => CaregiverPerformanceReport(
+                                caregiverId: widget.caregiverId)),
+                      );
                     }
                   },
                   child: Text('Add Performance'),
