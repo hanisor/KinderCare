@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:kindercare/caregiverScreen/caregiver_login.dart';
 import 'package:kindercare/parentScreen/parent_login.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Role extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+
+    Future<void> saveUserRole(String role) async {
+      final SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+      await sharedPreferences.setString('role', role);
+    }
+
     return Scaffold(
       backgroundColor: Colors.yellow[50],
       body: Center(
@@ -13,7 +20,7 @@ class Role extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(
+              const Text(
                 'Select Your Role',
                 style: TextStyle(
                   fontSize: 24,
@@ -21,17 +28,18 @@ class Role extends StatelessWidget {
                   color: Colors.pinkAccent, // Changing font color to pink
                 ),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               Center(
                 child: Container(
                   child: Column(
                     children: [
                       OutlinedButton(
-                        onPressed: () {
+                        onPressed: () async {
+                          await saveUserRole('parent');
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => ParentLogin(),
+                              builder: (context) => const ParentLogin(),
                             ),
                           );
                         },
@@ -43,7 +51,7 @@ class Role extends StatelessWidget {
                               width: 150,
                               height: 150,
                             ),
-                            SizedBox(height: 8),
+                            const SizedBox(height: 8),
                             const Text(
                               'Parent',
                               style: TextStyle(
@@ -52,17 +60,18 @@ class Role extends StatelessWidget {
                                 color: Colors.pinkAccent, // Changing font color to pink
                               ),
                             ),
-                            SizedBox(height: 10),
+                            const SizedBox(height: 10),
                           ],
                         ),
                       ),
                       const SizedBox(height: 20),
                       OutlinedButton(
-                        onPressed: () {
+                        onPressed: () async {
+                          await saveUserRole('caregiver');
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => CaregiverLogin(),
+                              builder: (context) => const CaregiverLogin(),
                             ),
                           );
                         },
@@ -74,8 +83,8 @@ class Role extends StatelessWidget {
                               width: 150,
                               height: 150,
                             ),
-                            SizedBox(height: 8),
-                            Text(
+                            const SizedBox(height: 8),
+                            const Text(
                               'Caregiver',
                               style: TextStyle(
                                 fontSize: 20,
@@ -83,7 +92,7 @@ class Role extends StatelessWidget {
                                 color: Colors.pink, // Changing font color to pink
                               ),
                             ),
-                            SizedBox(height: 10),
+                            const SizedBox(height: 10),
                           ],
                         ),
                       )
@@ -98,4 +107,3 @@ class Role extends StatelessWidget {
     );
   }
 }
-

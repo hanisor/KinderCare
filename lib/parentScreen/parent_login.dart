@@ -7,7 +7,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../caregiverScreen/forgot_password.dart';
 import '../caregiverScreen/parent_registration.dart';
 
-String? finalUsername;
 
 class ParentLogin extends StatefulWidget {
   const ParentLogin({Key? key}) : super(key: key);

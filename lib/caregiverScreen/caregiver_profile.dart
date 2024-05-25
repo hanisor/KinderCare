@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:kindercare/caregiverScreen/caregiver_editProfile.dart';
-import 'package:kindercare/splash_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../request_controller.dart';
-
 
 class CaregiverProfile extends StatefulWidget {
   const CaregiverProfile({Key? key}) : super(key: key);
@@ -22,10 +21,13 @@ class _CaregiverProfileState extends State<CaregiverProfile> {
   int? caregiverId;
   String errorMessage = '';
 
-
- Future<void> fetchCaregiverDetails() async {
+  Future<void> fetchCaregiverDetails() async {
     try {
-      final data = await getCaregiverDetails(finalEmail); // Use actual email here
+      SharedPreferences sharedPreferences =
+          await SharedPreferences.getInstance();
+      String? email = sharedPreferences.getString('email');
+
+      final data = await getCaregiverDetails(email);
       print('Response Data: $data');
       setState(() {
         caregiverUsername = data['username'] ?? 'Unknown';
@@ -35,7 +37,7 @@ class _CaregiverProfileState extends State<CaregiverProfile> {
         caregiverEmail = data['email'] ?? 'Unknown';
         caregiverId = data['id'];
         print('Fetched Caregiver ID: $caregiverId');
-        
+
         // Update text controllers with the fetched data
         caregiverName = caregiverName;
         caregiverUsername = caregiverUsername;
@@ -51,22 +53,20 @@ class _CaregiverProfileState extends State<CaregiverProfile> {
     }
   }
 
-    Future<Map<String, dynamic>> getCaregiverDetails(String? email) async{
+  Future<Map<String, dynamic>> getCaregiverDetails(String? email) async {
     print('email : $email');
-    RequestController req = RequestController(
-        path: 'caregiver-byEmail?email=$email');
+    RequestController req =
+        RequestController(path: 'caregiver-byEmail?email=$email');
 
     await req.get();
     var response = req.result();
     print("${req.status()}");
-    if(req.status() == 200){
-       return response;
-    }
-    else {
+    if (req.status() == 200) {
+      return response;
+    } else {
       throw Exception('Failed to load parent details');
     }
   }
-
 
   String obfuscateICNumber(String icNumber) {
     if (icNumber.length > 6) {
@@ -96,7 +96,7 @@ class _CaregiverProfileState extends State<CaregiverProfile> {
     await fetchCaregiverDetails();
   }
 
- @override
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -112,9 +112,11 @@ class _CaregiverProfileState extends State<CaregiverProfile> {
               const SizedBox(height: 16),
               Container(
                 padding: const EdgeInsets.all(16),
-                margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16), // Adjust margin for spacing
+                margin: const EdgeInsets.symmetric(
+                    vertical: 8, horizontal: 16), // Adjust margin for spacing
                 decoration: BoxDecoration(
-                  color: Colors.pink[50], // Change color to match kids' background
+                  color:
+                      Colors.pink[50], // Change color to match kids' background
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
@@ -130,7 +132,8 @@ class _CaregiverProfileState extends State<CaregiverProfile> {
                     CircleAvatar(
                       radius: profileHeight / 2,
                       backgroundColor: Colors.grey.shade800,
-                      backgroundImage: const AssetImage('assets/profile_pic.jpg'),
+                      backgroundImage:
+                          const AssetImage('assets/profile_pic.jpg'),
                     ),
                     const SizedBox(height: 16),
                     Text(
@@ -188,7 +191,9 @@ class _CaregiverProfileState extends State<CaregiverProfile> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => CaregiverEditProfile(caregiverId: caregiverId,),
+                            builder: (context) => CaregiverEditProfile(
+                              caregiverId: caregiverId,
+                            ),
                           ),
                         );
                       },

@@ -76,7 +76,7 @@ class _CaregiverPerformanceReportState
                       final parsedDate = DateTime.parse(date);
                       final monthYear =
                           DateFormat('MMMM yyyy').format(parsedDate);
-                      final day = DateFormat('dd').format(parsedDate);
+                      DateFormat('dd').format(parsedDate);
 
                       if (!performanceByMonthAndAge.containsKey(monthYear)) {
                         performanceByMonthAndAge[monthYear] = {};

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kindercare/parentScreen/parent_editProfile.dart';
-import 'package:kindercare/splash_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../request_controller.dart';
 import '../childScreen/child_editProfile.dart';
 import '../model/child_model.dart';
@@ -23,21 +23,25 @@ class _ParentProfileState extends State<ParentProfile> {
   int? parentId;
 
   Future<void> fetchParentDetails() async {
-    try {
-      final data = await getParentDetails(finalEmail!);
-      print('Response Data: $data');
-      setState(() {
-        parentUsername = data['username'];
-        parentName = data['name'];
-        parentIcNumber = data['ic_number'];
-        parentPhoneNumber = data['phone_number'];
-        parentEmail = data['email'];
-        parentId = data['id'];
-      });
-    } catch (error) {
-      print('Error fetching parent details: $error'); // Print error to debug
-    }
+  try {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    String? email = sharedPreferences.getString('email');
+    
+    final data = await getParentDetails(email);
+    print('Response Data: $data');
+    setState(() {
+      parentUsername = data['username'];
+      parentName = data['name'];
+      parentIcNumber = data['ic_number'];
+      parentPhoneNumber = data['phone_number'];
+      parentEmail = data['email'];
+      parentId = data['id'];
+    });
+  } catch (error) {
+    print('Error fetching parent details: $error');
   }
+}
+
 
   Future<Map<String, dynamic>> getParentDetails(String? email) async {
     print('email : $email');
@@ -76,6 +80,7 @@ class _ParentProfileState extends State<ParentProfile> {
           childDOB: childData['date_of_birth'], // Ensure age is parsed as int
           childGender: childData['gender'],
           childAllergies: childData['allergy'],
+          childStatus:  childData['status'] as String,
           parentId: int.tryParse(childData['guardian_id']
               .toString()), performances: [], // Ensure guardian_id is parsed as int
         );

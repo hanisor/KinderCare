@@ -54,6 +54,7 @@ class _CaregiverBehaviourState extends State<CaregiverBehaviour> {
                       childGender: x['gender'] as String,
                       childMykidNumber: x['my_kid_number'] as String,
                       childAllergies: x['allergy'] as String,
+                      childStatus:  x['status'] as String,
                       parentId: int.tryParse(x['guardian_id'].toString()), 
                       performances: [],
                     )));

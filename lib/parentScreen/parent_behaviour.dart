@@ -34,8 +34,9 @@ class _ParentBehaviourState extends State<ParentBehaviour> {
                     childGender: x['gender'] as String,
                     childMykidNumber: x['my_kid_number'] as String,
                     childAllergies: x['allergy'] as String,
+                    childStatus:  x['status'] as String,
                     parentId: widget.parentId,
-                    performances: [],
+                    performances: [], 
                   )));
         } else {
           print("Invalid children data format"); // Debugging line

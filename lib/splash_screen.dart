@@ -1,17 +1,16 @@
 import 'dart:async';
-//import 'package:kindercare/caregiverScreen/caregiver_homepage.dart';
+import 'package:flutter/material.dart';
 import 'package:kindercare/caregiverScreen/caregiver_homepage.dart';
 import 'package:kindercare/model/splash_screen_model.dart';
-import 'package:flutter/material.dart';
 import 'package:kindercare/parentScreen/parent_homepage.dart';
 import 'package:kindercare/role.dart';
 import 'package:get/get.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 String? finalEmail;
+String? userRole;
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({Key? key});
+  const SplashScreen({Key? key}) : super(key: key);
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -23,40 +22,34 @@ class _SplashScreenState extends State<SplashScreen> {
 
   List<SplashScreenModel> splashScreenList = [
     SplashScreenModel(
-        "assets/logo.png",
-        "Welcome to KinderCare: Where every child's safety and happiness come first!",
-        "Welcome"),
+      "assets/logo.png",
+      "Welcome to KinderCare: Where every child's safety and happiness come first!",
+      "Welcome",
+    ),
   ];
 
   @override
   void initState() {
     super.initState();
-    getValidationData().whenComplete(() async{
-      Timer(Duration(seconds: 2), () => Get.to(() => finalEmail == null
-          ? Role() : CaregiverHomepage ())); // Pass userId to CaregiverHomepage
-
+    Timer(Duration(seconds: 2), () {
+      if (finalEmail == null) {
+        Get.to(() => Role());
+      } else {
+        if (userRole == 'parent') {
+          Get.to(() => ParentHomepage());
+        } else if (userRole == 'caregiver') {
+          Get.to(() => CaregiverHomepage());
+        } else {
+          Get.to(() => Role());
+        }
+      }
     });
   }
-
-
-  Future<void> getValidationData() async {
-    final SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    var obtainedEmail = sharedPreferences.getString('email');
-    if (obtainedEmail != null) {
-      setState(() {
-        finalEmail = obtainedEmail;
-      });
-    }
-    print('Final Email: $finalEmail');
-  }
-
-
-
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center( // Center widget added here
+      body: Center(
         child: Stack(
           alignment: Alignment.center,
           children: [
@@ -106,10 +99,7 @@ class PageBuilderWidget extends StatelessWidget {
             margin: const EdgeInsets.only(top: 20),
             child: Image.asset(imgurl),
           ),
-          const SizedBox(
-            height: 20,
-          ),
-          // Title Text
+          const SizedBox(height: 20),
           Text(
             title,
             style: TextStyle(
@@ -118,10 +108,7 @@ class PageBuilderWidget extends StatelessWidget {
               fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(
-            height: 20,
-          ),
-          // Description
+          const SizedBox(height: 20),
           Text(
             description,
             textAlign: TextAlign.justify,

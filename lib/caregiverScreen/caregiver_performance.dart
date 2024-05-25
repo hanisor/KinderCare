@@ -101,6 +101,7 @@ class _CaregiverPerformanceState extends State<CaregiverPerformance> {
                       childGender: x['gender'] as String,
                       childMykidNumber: x['my_kid_number'] as String,
                       childAllergies: x['allergy'] as String,
+                      childStatus:  x['status'] as String,
                       parentId: int.tryParse(x['guardian_id'].toString()) ?? 0,
                       performances: [],
                     )));

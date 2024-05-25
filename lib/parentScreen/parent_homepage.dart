@@ -4,16 +4,14 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:kindercare/model/note_model.dart';
-import 'package:kindercare/parentScreen/parent_absence.dart';
-import 'package:kindercare/parentScreen/parent_attendance.dart';
+import 'package:kindercare/parentScreen/parent_attendance_arrival.dart';
+import 'package:kindercare/parentScreen/parent_attendance_departure.dart';
 import 'package:kindercare/parentScreen/parent_behaviour.dart';
 import 'package:kindercare/parentScreen/parent_note.dart';
 import 'package:kindercare/parentScreen/parent_performance.dart';
 import 'package:kindercare/parentScreen/parent_pickuprepoprt.dart';
 import 'package:kindercare/parentScreen/parent_profile.dart';
-import 'package:kindercare/parentScreen/parent_sick.dart';
 import 'package:kindercare/role.dart';
-import 'package:kindercare/splash_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../request_controller.dart';
 
@@ -33,8 +31,12 @@ class _ParentHomepageState extends State<ParentHomepage> {
 
   Future<void> fetchParentDetails() async {
     try {
-      print('parent email : $finalEmail');
-      final data = await getParentDetails(finalEmail);
+
+      SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+      String? email = sharedPreferences.getString('email');
+    
+      print('parent email : $email');
+      final data = await getParentDetails(email);
       print('Response Data: $data');
       setState(() {
         parentUsername = data['username'];
@@ -61,7 +63,7 @@ class _ParentHomepageState extends State<ParentHomepage> {
     }
   }
 
-   Future<void> fetchNotesByCaregiver() async {
+  Future<void> fetchNotesByCaregiver() async {
     RequestController req = RequestController(
         path: 'note/sendby-caregiver'); // Pass email as parameter
 
@@ -78,7 +80,8 @@ class _ParentHomepageState extends State<ParentHomepage> {
         }).where((item) =>
             item.noteStatus == 'UNREAD' &&
             item.parentId == parentId &&
-            item.senderType == 'caregiver')); // Filter items with status 'Pending'
+            item.senderType ==
+                'caregiver')); // Filter items with status 'Pending'
 
         // Sort notes by date time (optional)
         noteList.sort((a, b) => a.noteDateTime.compareTo(b.noteDateTime));
@@ -90,7 +93,7 @@ class _ParentHomepageState extends State<ParentHomepage> {
     }
   }
 
-   Future<void> updateNoteStatus(int? noteId, int index) async {
+  Future<void> updateNoteStatus(int? noteId, int index) async {
     // Prepare the request body with the status "Taken"
     Map<String, dynamic> requestBody = {};
     NoteModel item = noteList[index];
@@ -180,111 +183,113 @@ class _ParentHomepageState extends State<ParentHomepage> {
                 ),
                 const SizedBox(height: 20),
                 Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Title for the section
-                  Padding(
-                    padding: EdgeInsets.symmetric(vertical: 10.0),
-                    child: Text(
-                      'Notes from Caregiver',
-                      style: GoogleFonts.playfairDisplay(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.black,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  // Container for the notes section
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.lightBlue[50],
-                      borderRadius: BorderRadius.circular(20.0),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withOpacity(0.5),
-                          spreadRadius: 5,
-                          blurRadius: 7,
-                          offset: const Offset(0, 3),
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Title for the section
+                    Padding(
+                      padding: EdgeInsets.symmetric(vertical: 10.0),
+                      child: Text(
+                        'Notes from Caregiver',
+                        style: GoogleFonts.playfairDisplay(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.black,
                         ),
-                      ],
+                        textAlign: TextAlign.center,
+                      ),
                     ),
-                    child: SizedBox(
-                      height: 300, // Adjust height as needed
-                      child: noteList.isEmpty
-                          ? const Center(
-                              child: Text(
-                                'No Notes',
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
+                    // Container for the notes section
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.lightBlue[50],
+                        borderRadius: BorderRadius.circular(20.0),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.5),
+                            spreadRadius: 5,
+                            blurRadius: 7,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: SizedBox(
+                        height: 300, // Adjust height as needed
+                        child: noteList.isEmpty
+                            ? const Center(
+                                child: Text(
+                                  'No Notes',
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              ),
-                            )
-                          : ListView.builder(
-                              itemCount: noteList.length,
-                              itemBuilder: (BuildContext context, int index) {
-                                NoteModel item = noteList[index];
-                                return Card(
-                                  elevation: 4,
-                                  margin: const EdgeInsets.symmetric(
-                                      vertical: 8, horizontal: 16),
-                                  child: ListTile(
-                                    title: RichText(
-                                      text: TextSpan(
-                                        style:
-                                            DefaultTextStyle.of(context).style,
-                                        children: <TextSpan>[
-                                          TextSpan(
-                                            text:
-                                                'From: Caregiver ${item.caregiverModel?.caregiverUsername}',
-                                            style: const TextStyle(
-                                                fontWeight: FontWeight.bold),
-                                          ),
+                              )
+                            : ListView.builder(
+                                itemCount: noteList.length,
+                                itemBuilder: (BuildContext context, int index) {
+                                  NoteModel item = noteList[index];
+                                  return Card(
+                                    elevation: 4,
+                                    margin: const EdgeInsets.symmetric(
+                                        vertical: 8, horizontal: 16),
+                                    child: ListTile(
+                                      title: RichText(
+                                        text: TextSpan(
+                                          style: DefaultTextStyle.of(context)
+                                              .style,
+                                          children: <TextSpan>[
+                                            TextSpan(
+                                              text:
+                                                  'From: Caregiver ${item.caregiverModel?.caregiverUsername}',
+                                              style: const TextStyle(
+                                                  fontWeight: FontWeight.bold),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      subtitle: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(item.noteDetails),
+                                          Text(_formatDateTime(
+                                              item.noteDateTime)),
                                         ],
                                       ),
+                                      trailing: Checkbox(
+                                        value: item.noteStatus == 'READ',
+                                        onChanged: (bool? value) {
+                                          setState(() {
+                                            item.noteStatus =
+                                                value! ? 'READ' : 'UNREAD';
+                                          });
+                                          // Call updateSicknessStatus when the checkbox is toggled
+                                          updateNoteStatus(item.noteId,
+                                              index); // Pass index here
+                                        },
+                                      ),
                                     ),
-                                    subtitle: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(item.noteDetails),
-                                        Text(
-                                            _formatDateTime(item.noteDateTime)),
-                                      ],
-                                    ),
-                                    trailing: Checkbox(
-                                      value: item.noteStatus == 'READ',
-                                      onChanged: (bool? value) {
-                                        setState(() {
-                                          item.noteStatus =
-                                              value! ? 'READ' : 'UNREAD';
-                                        });
-                                        // Call updateSicknessStatus when the checkbox is toggled
-                                        updateNoteStatus(item.noteId,
-                                            index); // Pass index here
-                                      },
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
+                                  );
+                                },
+                              ),
+                      ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
                 const SizedBox(height: 20),
                 Row(
                   children: [
                     GestureDetector(
                       onTap: () {
                         Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => ParentAttendance()));
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) =>
+                                  ParentAttendanceArrival(parentId: parentId)),
+                        );
                       },
                       child: Container(
-                        width: 120,
+                        width: 147,
                         height: 100,
                         decoration: BoxDecoration(
                           color: Colors.pinkAccent,
@@ -294,11 +299,59 @@ class _ParentHomepageState extends State<ParentHomepage> {
                               color: Colors.grey.withOpacity(0.5),
                               spreadRadius: 5,
                               blurRadius: 7,
-                              offset: Offset(0, 3),
+                              offset: const Offset(0, 3),
                             ),
                           ],
                         ),
-                        padding: EdgeInsets.all(16.0),
+                        padding: const EdgeInsets.all(16.0),
+                        child: const Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.file_copy,
+                              color: Colors.white,
+                              size: 30,
+                            ),
+                            SizedBox(height: 8),
+                            Text(
+                              'Attendance Arrival',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 15.0,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 13),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => ParentAttendanceDeparture(
+                                    parentId: parentId,
+                                  )),
+                        );
+                      },
+                      child: Container(
+                        width: 147,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          color: Colors.pinkAccent,
+                          borderRadius: BorderRadius.circular(20.0),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.5),
+                              spreadRadius: 5,
+                              blurRadius: 7,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        padding: const EdgeInsets.all(16.0),
                         child: const Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -309,7 +362,7 @@ class _ParentHomepageState extends State<ParentHomepage> {
                             ),
                             SizedBox(height: 8),
                             Text(
-                              'Attendance',
+                              'Attendance Departure',
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 15.0,
@@ -320,18 +373,24 @@ class _ParentHomepageState extends State<ParentHomepage> {
                         ),
                       ),
                     ),
-                    SizedBox(width: 13),
+                    const SizedBox(width: 13),
+                  ],
+                ),
+                const SizedBox(height: 13),
+                Row(
+                  children: [
                     GestureDetector(
                       onTap: () {
                         Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) =>
-                                    ParentSickness(parentId: parentId)));
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) =>
+                                  ParentNote(parentId: parentId)),
+                        );
                       },
                       child: Container(
                         width: 85,
-                        height: 100,
+                        height: 104,
                         decoration: BoxDecoration(
                           color: Colors.pinkAccent,
                           borderRadius: BorderRadius.circular(20.0),
@@ -340,57 +399,11 @@ class _ParentHomepageState extends State<ParentHomepage> {
                               color: Colors.grey.withOpacity(0.5),
                               spreadRadius: 5,
                               blurRadius: 7,
-                              offset: Offset(0, 3),
+                              offset: const Offset(0, 3),
                             ),
                           ],
                         ),
-                        padding: EdgeInsets.all(16.0),
-                        child: const Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.sick_outlined,
-                              color: Colors.white,
-                              size: 30,
-                            ),
-                            SizedBox(height: 8),
-                            Text(
-                              'Sick',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 15.0,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 13),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) =>
-                                    ParentNote(parentId: parentId)));
-                      },
-                      child: Container(
-                        width: 85,
-                        height: 100,
-                        decoration: BoxDecoration(
-                          color: Colors.pinkAccent,
-                          borderRadius: BorderRadius.circular(20.0),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.grey.withOpacity(0.5),
-                              spreadRadius: 5,
-                              blurRadius: 7,
-                              offset: Offset(0, 3),
-                            ),
-                          ],
-                        ),
-                        padding: EdgeInsets.all(16.0),
+                        padding: const EdgeInsets.all(16.0),
                         child: const Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -412,6 +425,107 @@ class _ParentHomepageState extends State<ParentHomepage> {
                         ),
                       ),
                     ),
+                    const SizedBox(width: 13),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) =>
+                                  ParentNote(parentId: parentId)),
+                        );
+                      },
+                      child: Container(
+                        width: 85,
+                        height: 104,
+                        decoration: BoxDecoration(
+                          color: Colors.pinkAccent,
+                          borderRadius: BorderRadius.circular(20.0),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.5),
+                              spreadRadius: 5,
+                              blurRadius: 7,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        padding: const EdgeInsets.all(16.0),
+                        child: const Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.sick_outlined,
+                              color: Colors.white,
+                              size: 30,
+                            ),
+                            SizedBox(height: 8),
+                            Text(
+                              'Sick',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 15.0,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 13),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => ParentPickupReport()),
+                        );
+                      },
+                      child: Container(
+                        width: 111,
+                        height: 104,
+                        decoration: BoxDecoration(
+                          color: Colors.pinkAccent,
+                          borderRadius: BorderRadius.circular(20.0),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.5),
+                              spreadRadius: 5,
+                              blurRadius: 7,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        padding: const EdgeInsets.all(16.0),
+                        child: const Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.person,
+                              color: Colors.white,
+                              size: 30,
+                            ),
+                            Text(
+                              'Authorize',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 15.0,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              'Pick-up',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 15.0,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 13),
                   ],
                 ),
                 const SizedBox(height: 13),
@@ -423,101 +537,7 @@ class _ParentHomepageState extends State<ParentHomepage> {
                             context,
                             MaterialPageRoute(
                                 builder: (context) =>
-                                    ParentPickupReport(parentId: parentId)));
-                      },
-                      child: Container(
-                        width: 180,
-                        height: 100,
-                        decoration: BoxDecoration(
-                          color: Colors.pinkAccent,
-                          borderRadius: BorderRadius.circular(20.0),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.grey.withOpacity(0.5),
-                              spreadRadius: 5,
-                              blurRadius: 7,
-                              offset: Offset(0, 3),
-                            ),
-                          ],
-                        ),
-                        padding: EdgeInsets.all(16.0),
-                        child: const Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.person,
-                              color: Colors.white,
-                              size: 30,
-                            ),
-                            SizedBox(height: 8),
-                            Text(
-                              'Authorize Pick-up',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 15.0,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 13),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => ParentAbsence()));
-                      },
-                      child: Container(
-                        width: 120,
-                        height: 100,
-                        decoration: BoxDecoration(
-                          color: Colors.pinkAccent,
-                          borderRadius: BorderRadius.circular(20.0),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.grey.withOpacity(0.5),
-                              spreadRadius: 5,
-                              blurRadius: 7,
-                              offset: Offset(0, 3),
-                            ),
-                          ],
-                        ),
-                        padding: EdgeInsets.all(16.0),
-                        child: const Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.calendar_month,
-                              color: Colors.white,
-                              size: 30,
-                            ),
-                            SizedBox(height: 8),
-                            Text(
-                              'Absence',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 15.0,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 13),
-                Row(
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => ParentBehaviour(parentId: parentId)));
+                                    ParentBehaviour(parentId: parentId)));
                       },
                       child: Container(
                         width: 130,
@@ -562,7 +582,8 @@ class _ParentHomepageState extends State<ParentHomepage> {
                         Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (context) => ParentPerformance(parentId: parentId)));
+                                builder: (context) =>
+                                    ParentPerformance(parentId: parentId)));
                       },
                       child: Container(
                         width: 170,
@@ -645,10 +666,26 @@ class _ParentHomepageState extends State<ParentHomepage> {
               onTap: () async {
                 final SharedPreferences sharedPreferences =
                     await SharedPreferences.getInstance();
-                sharedPreferences.remove('email');
-                sharedPreferences.remove('token');
-                Get.offAll(
-                    Role()); // Use Get.offAll to navigate without keeping the current screen in the stack
+
+                // Print shared preferences before removal
+                print('SharedPreferences before logout:');
+                print('email: ${sharedPreferences.getString('email')}');
+                print('token: ${sharedPreferences.getString('token')}');
+                print('role: ${sharedPreferences.getString('role')}');
+
+                // Remove the shared preferences
+                await sharedPreferences.remove('email');
+                await sharedPreferences.remove('token');
+                await sharedPreferences.remove('role');
+
+                // Print shared preferences after removal
+                print('SharedPreferences after logout:');
+                print('email: ${sharedPreferences.getString('email')}');
+                print('token: ${sharedPreferences.getString('token')}');
+                print('role: ${sharedPreferences.getString('role')}');
+
+                // Navigate to Role screen
+                Get.offAll(Role());
               },
             ),
           ],
@@ -676,7 +713,7 @@ class _ParentHomepageState extends State<ParentHomepage> {
     );
   }
 
-    String _formatDateTime(DateTime dateTime) {
+  String _formatDateTime(DateTime dateTime) {
     // Format the DateTime object in 12-hour system with AM/PM indicator
     return DateFormat('MMMM dd, yyyy hh:mm a').format(dateTime);
   }

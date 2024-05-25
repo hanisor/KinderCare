@@ -3,7 +3,8 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:kindercare/caregiverScreen/caregiver_attendance.dart';
+import 'package:kindercare/caregiverScreen/caregiver_attendance_arrival.dart';
+import 'package:kindercare/caregiverScreen/caregiver_attendance_departure.dart';
 import 'package:kindercare/caregiverScreen/caregiver_behaviorReport.dart';
 import 'package:kindercare/caregiverScreen/caregiver_note.dart';
 import 'package:kindercare/caregiverScreen/caregiver_performanceReport.dart';
@@ -12,7 +13,6 @@ import 'package:kindercare/caregiverScreen/caregiver_profile.dart';
 import 'package:kindercare/caregiverScreen/caregiver_sick.dart';
 import 'package:kindercare/model/note_model.dart';
 import 'package:kindercare/request_controller.dart';
-import 'package:kindercare/splash_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../role.dart';
 import 'caregiver_parentregister.dart';
@@ -31,8 +31,11 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
 
   Future<void> fetchCaregiverDetails() async {
     try {
-      print('parent email : $finalEmail');
-      final data = await getCaregiverDetails(finalEmail);
+      SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    String? email = sharedPreferences.getString('email');
+    
+      print('parent email : $email');
+      final data = await getCaregiverDetails(email);
       print('Response Data: $data');
       setState(() {
         caregiverUsername = data['username'];
@@ -281,7 +284,7 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => const CaregiverAttendance()),
+                            builder: (context) => CaregiverAttendanceArrival(caregiverId: caregiverId,)),
                       );
                     },
                     child: Container(
@@ -310,7 +313,7 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
                           ),
                           SizedBox(height: 8),
                           Text(
-                            'Report',
+                            'Attendance Arrival',
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 15.0,
@@ -327,7 +330,7 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => const CaregiverAttendance()),
+                            builder: (context) => CaregiverAttendanceDeparture(caregiverId: caregiverId)),
                       );
                     },
                     child: Container(
@@ -356,7 +359,7 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
                           ),
                           SizedBox(height: 8),
                           Text(
-                            'Attendance',
+                            'Attendance Departure',
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 15.0,
@@ -666,8 +669,26 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
               onTap: () async {
                 final SharedPreferences sharedPreferences =
                     await SharedPreferences.getInstance();
-                sharedPreferences.remove('email');
-                Get.to(Role());
+
+                // Print shared preferences before removal
+                print('SharedPreferences before logout:');
+                print('email: ${sharedPreferences.getString('email')}');
+                print('token: ${sharedPreferences.getString('token')}');
+                print('role: ${sharedPreferences.getString('role')}');
+
+                // Remove the shared preferences
+                await sharedPreferences.remove('email');
+                await sharedPreferences.remove('token');
+                await sharedPreferences.remove('role');
+
+                // Print shared preferences after removal
+                print('SharedPreferences after logout:');
+                print('email: ${sharedPreferences.getString('email')}');
+                print('token: ${sharedPreferences.getString('token')}');
+                print('role: ${sharedPreferences.getString('role')}');
+
+                // Navigate to Role screen
+                Get.offAll(Role());
               },
             ),
           ],

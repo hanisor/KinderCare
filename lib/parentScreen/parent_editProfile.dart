@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kindercare/request_controller.dart';
-import '../splash_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ParentEditProfile extends StatefulWidget {
   final int? parentId;
@@ -45,7 +45,11 @@ class _ParentEditProfileState extends State<ParentEditProfile> {
 
   Future<void> fetchParentDetails() async {
     try {
-      final data = await getParentDetails(finalEmail!);
+      SharedPreferences sharedPreferences =
+          await SharedPreferences.getInstance();
+      String? email = sharedPreferences.getString('email');
+
+      final data = await getParentDetails(email);
       print('Response Data: $data');
       setState(() {
         parentUsername = data['username'];
@@ -58,54 +62,6 @@ class _ParentEditProfileState extends State<ParentEditProfile> {
       print('Error fetching parent details: $error'); // Print error to debug
     }
   }
-
-  /* Future<void> parentUpdate(String parentId, String currentName, String currentUsername, String currentIC, String currentPhone, String currentEmail, {String? newName, String? newUsername, String? newIC, String? newPhone, String? newEmail}) async {
-    Map<String, dynamic> requestData = {
-      "id": parentId,
-      "name": newName ?? currentName, // If newName is null, use currentName
-      "username": newUsername ?? currentUsername,
-      "ic_number": newIC ?? currentIC,
-      "phone_number": newPhone ?? currentPhone,
-      "email": newEmail ?? currentEmail,
-    };
-
-
-
-    var url = Uri.parse("http://172.20.10.3/xampp/fyp/parent_controller_layer/update_parent.php");
-    var response = await http.put(
-      url,
-      headers: {
-        'Content-Type': 'application/json', // Set content-type to JSON
-      },
-      body: jsonEncode(requestData),
-    );
-
-    print("parentId : ${parentId}");
-    print("HTTP Response: ${response.statusCode}");
-    print("Response Body: ${response.body}");
-    var data = json.decode(response.body);
-    if (data == "Error") {
-      Fluttertoast.showToast(
-        msg: "This data failed to be updated",
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.CENTER,
-        timeInSecForIosWeb: 1,
-        backgroundColor: Colors.pinkAccent,
-        textColor: Colors.white,
-        fontSize: 16.0,
-      );
-    } else {
-      Fluttertoast.showToast(
-        msg: "Edit successful",
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.CENTER,
-        timeInSecForIosWeb: 1,
-        backgroundColor: Colors.pinkAccent,
-        textColor: Colors.white,
-        fontSize: 16.0,
-      );
-    }
-  } */
   Future<void> parentUpdate(
     String parentId,
     String currentName,

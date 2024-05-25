@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kindercare/request_controller.dart';
-
-import '../splash_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class CaregiverEditProfile extends StatefulWidget {
   final int? caregiverId;
@@ -47,9 +46,13 @@ class _CaregiverEditProfileState extends State<CaregiverEditProfile> {
     }
   }
 
-   Future<void> fetchCaregiverDetails() async {
+  Future<void> fetchCaregiverDetails() async {
     try {
-      final data = await getCaregiverDetails(finalEmail); // Use actual email here
+      SharedPreferences sharedPreferences =
+          await SharedPreferences.getInstance();
+      String? email = sharedPreferences.getString('email');
+
+      final data = await getCaregiverDetails(email);
       print('Response Data: $data');
       setState(() {
         caregiverUsername = data['username'] ?? 'Username';
@@ -59,7 +62,7 @@ class _CaregiverEditProfileState extends State<CaregiverEditProfile> {
         caregiverEmail = data['email'] ?? 'Email';
         caregiverId = data['id'];
         print('Fetched Caregiver ID: $caregiverId');
-        
+
         // Update text controllers with the fetched data
         caregiverNameController.text = caregiverName;
         caregiverUsernameController.text = caregiverUsername;
@@ -74,7 +77,6 @@ class _CaregiverEditProfileState extends State<CaregiverEditProfile> {
       });
     }
   }
-
 
   Future<void> caregiverUpdate(
     int? caregiverId,
@@ -96,7 +98,8 @@ class _CaregiverEditProfileState extends State<CaregiverEditProfile> {
     };
 
     // Make sure the requestData contains at least one field to update
-    if (requestData.length == 1) { // Changed from requestData.isEmpty to requestData.length == 1 to ensure 'id' is excluded
+    if (requestData.length == 1) {
+      // Changed from requestData.isEmpty to requestData.length == 1 to ensure 'id' is excluded
       print("No fields to update");
       return;
     }
@@ -305,10 +308,13 @@ class _CaregiverEditProfileState extends State<CaregiverEditProfile> {
                         onPressed: () async {
                           try {
                             // Get the updated values from text controllers
-                            String newName = caregiverNameController.text.trim();
-                            String newUsername = caregiverUsernameController.text.trim();
+                            String newName =
+                                caregiverNameController.text.trim();
+                            String newUsername =
+                                caregiverUsernameController.text.trim();
                             String newIC = caregiverIcController.text.trim();
-                            String newPhone = caregiverPhoneController.text.trim();
+                            String newPhone =
+                                caregiverPhoneController.text.trim();
 
                             // Call the update function with existing data for fields that are not being updated
                             await caregiverUpdate(
@@ -317,10 +323,18 @@ class _CaregiverEditProfileState extends State<CaregiverEditProfile> {
                               caregiverUsername, // Existing username
                               caregiverIcNumber, // Existing IC number
                               caregiverPhoneNumber, // Existing phone number
-                              newName: newName.isNotEmpty ? newName : null, // Updated name if provided
-                              newUsername: newUsername.isNotEmpty ? newUsername : null, // Updated username if provided
-                              newIC: newIC.isNotEmpty ? newIC : null, // Updated IC number if provided
-                              newPhone: newPhone.isNotEmpty ? newPhone : null, // Updated phone number if provided
+                              newName: newName.isNotEmpty
+                                  ? newName
+                                  : null, // Updated name if provided
+                              newUsername: newUsername.isNotEmpty
+                                  ? newUsername
+                                  : null, // Updated username if provided
+                              newIC: newIC.isNotEmpty
+                                  ? newIC
+                                  : null, // Updated IC number if provided
+                              newPhone: newPhone.isNotEmpty
+                                  ? newPhone
+                                  : null, // Updated phone number if provided
                             );
                             Navigator.pop(context);
                           } catch (e) {

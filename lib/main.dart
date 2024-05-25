@@ -1,9 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:get/get_navigation/src/root/get_material_app.dart';
+import 'package:kindercare/model/attendance_model.dart';
 import 'package:kindercare/splash_screen.dart';
+import 'package:provider/provider.dart';
 
 Future<void> main() async {
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AttendanceModel()),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
