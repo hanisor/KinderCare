@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:kindercare/model/attendance_model.dart';
 import 'package:kindercare/model/child_model.dart';
 import 'package:kindercare/request_controller.dart';
@@ -80,7 +80,7 @@ class _CaregiverAttendanceDepartureState
                                     ),
                                     trailing: IconButton(
                                       icon: Icon(
-                                          attendanceModel.selectedChildren
+                                        attendanceModel.selectedChildren
                                                 .contains(child)
                                             ? Icons.check_circle
                                             : Icons.check_circle_outline,
@@ -191,13 +191,29 @@ class _CaregiverAttendanceDepartureState
             ),
             TextButton(
               onPressed: () {
-                attendanceModel.addChild(child);
-                print("Added child: $child");
-
-                // Debugging line - print selected children after toggling
-                print(
-                    "Selected children after toggling: ${attendanceModel.selectedChildren}");
-
+                if (!attendanceModel.selectedChildren.contains(child)) {
+                  attendanceModel.addChild(child);
+                  Fluttertoast.showToast(
+                    msg:
+                        "Child data is sending to the parent for double-check.",
+                    toastLength: Toast.LENGTH_SHORT,
+                    gravity: ToastGravity.BOTTOM,
+                    timeInSecForIosWeb: 1,
+                    backgroundColor: Colors.green,
+                    textColor: Colors.white,
+                    fontSize: 16.0,
+                  );
+                } else {
+                  Fluttertoast.showToast(
+                    msg: "This child is already selected.",
+                    toastLength: Toast.LENGTH_SHORT,
+                    gravity: ToastGravity.BOTTOM,
+                    timeInSecForIosWeb: 1,
+                    backgroundColor: Colors.red,
+                    textColor: Colors.white,
+                    fontSize: 16.0,
+                  );
+                }
                 Navigator.pop(context);
               },
               child: const Text('Yes'),

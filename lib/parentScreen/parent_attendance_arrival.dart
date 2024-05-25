@@ -67,7 +67,7 @@ void toggleChildSelection(ChildModel child, AttendanceModel attendanceModel) {
 }
 
 
-  void sendAttendanceConfirmation(BuildContext context, AttendanceModel attendanceModel, DateTime dateTime) {
+ void sendAttendanceConfirmation(BuildContext context, AttendanceModel attendanceModel, DateTime dateTime) {
   showDialog(
     context: context,
     builder: (BuildContext context) {
@@ -100,18 +100,18 @@ void toggleChildSelection(ChildModel child, AttendanceModel attendanceModel) {
           TextButton(
             onPressed: () {
               Navigator.of(context).pop();
+              // Create a copy of selectedChildren
+              final List<ChildModel> selectedChildrenCopy = List.from(attendanceModel.selectedChildren);
               // Update selectedDateTime in AttendanceModel
               attendanceModel.selectedDateTime = dateTime;
               // Pass date and time along with children details to the model
-              attendanceModel.addChildWithDateTime(attendanceModel.selectedChildren, dateTime);
-              // Show toast message
-              Fluttertoast.showToast(
-                msg: 'You have sent attendance for your children!',
-                toastLength: Toast.LENGTH_SHORT,
-                gravity: ToastGravity.BOTTOM,
-                timeInSecForIosWeb: 1,
-                backgroundColor: const Color.fromARGB(255, 244, 157, 157),
-                textColor: const Color.fromARGB(255, 0, 0, 0),
+              attendanceModel.addChildWithDateTime(selectedChildrenCopy, dateTime);
+              // Show SnackBar message
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Attendance for your children has been sent!'),
+                  duration: Duration(seconds: 2), // Adjust the duration as needed
+                ),
               );
             },
             child: const Text('Yes'),
