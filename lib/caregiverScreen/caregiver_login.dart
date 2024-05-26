@@ -8,7 +8,6 @@ import 'caregiver_homepage.dart';
 import 'caregiver_registration.dart';
 import 'forgot_password.dart';
 
-
 class CaregiverLogin extends StatefulWidget {
   const CaregiverLogin({Key? key}) : super(key: key);
 
@@ -17,12 +16,11 @@ class CaregiverLogin extends StatefulWidget {
 }
 
 class _CaregiverLoginState extends State<CaregiverLogin> {
-  var caregiverEmailEditingController = TextEditingController();
-  var caregiverUsernameEditingController = TextEditingController();
-  var caregiverPasswordEditingController = TextEditingController();
+  final caregiverEmailEditingController = TextEditingController();
+  final caregiverPasswordEditingController = TextEditingController();
   bool _obscurePassword = true;
 
- Future<void> login() async {
+  Future<void> login() async {
     var sharedPreferences = await SharedPreferences.getInstance();
     String caregiverEmail = caregiverEmailEditingController.text.trim();
     String caregiverPassword = caregiverPasswordEditingController.text.trim();
@@ -63,59 +61,72 @@ class _CaregiverLoginState extends State<CaregiverLogin> {
       );
     }
   }
-  @override
+
+ @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.yellow[50],
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(25.0),
-          child: Center(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text(
-                  'Sign in as caregiver',
+      backgroundColor: Colors.white,
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const SizedBox(height: 80),
+              const Text(
+                  'Caregiver Login',
                   style: TextStyle(
-                    fontSize: 30,
+                    fontSize: 28,
                     fontWeight: FontWeight.bold,
+                    color: Colors.pinkAccent,
                   ),
                 ),
-                const SizedBox(height: 30),
+                const SizedBox(height: 20),
                 const Text(
-                  'Enter correct email and password',
-                  style: TextStyle(color: Colors.black87, fontSize: 18),
+                  'Please enter your credentials to continue',
+                  style: TextStyle(color: Colors.black54, fontSize: 16),
                 ),
-                const SizedBox(height: 30),
+                const SizedBox(height: 40),
                 Padding(
-                  padding: const EdgeInsets.all(25.0),
+                  padding: const EdgeInsets.symmetric(vertical: 10.0),
                   child: TextField(
                     keyboardType: TextInputType.emailAddress,
                     decoration: InputDecoration(
                       enabledBorder: OutlineInputBorder(
                         borderSide: const BorderSide(
-                            width: 3, color: Colors.deepOrangeAccent),
-                        borderRadius: BorderRadius.circular(50.0),
+                            width: 2, color: Colors.pinkAccent),
+                        borderRadius: BorderRadius.circular(10.0),
                       ),
-                      prefixIcon: const Icon(Icons.email_outlined),
-                      hintText: "Enter your email",
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(
+                            width: 2, color: Colors.pinkAccent),
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                      prefixIcon: const Icon(Icons.email_outlined,
+                          color: Colors.pinkAccent),
+                      hintText: "Email",
                     ),
                     controller: caregiverEmailEditingController,
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.all(25.0),
-                  child: TextFormField(
+                  padding: const EdgeInsets.symmetric(vertical: 10.0),
+                  child: TextField(
                     obscureText: _obscurePassword,
                     keyboardType: TextInputType.visiblePassword,
                     decoration: InputDecoration(
                       enabledBorder: OutlineInputBorder(
                         borderSide: const BorderSide(
-                            width: 3, color: Colors.deepOrangeAccent),
-                        borderRadius: BorderRadius.circular(50.0),
+                            width: 2, color: Colors.pinkAccent),
+                        borderRadius: BorderRadius.circular(10.0),
                       ),
-                      prefixIcon: const Icon(Icons.password_outlined),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(
+                            width: 2, color: Colors.pinkAccent),
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                      prefixIcon: const Icon(Icons.lock_outlined,
+                          color: Colors.pinkAccent),
                       suffixIcon: IconButton(
                         onPressed: () {
                           setState(() {
@@ -123,10 +134,12 @@ class _CaregiverLoginState extends State<CaregiverLogin> {
                           });
                         },
                         icon: _obscurePassword
-                            ? const Icon(Icons.visibility_off_outlined)
-                            : const Icon(Icons.visibility_outlined),
+                            ? const Icon(Icons.visibility_off_outlined,
+                                color: Colors.pinkAccent)
+                            : const Icon(Icons.visibility_outlined,
+                                color: Colors.pinkAccent),
                       ),
-                      hintText: "Enter your password",
+                      hintText: "Password",
                     ),
                     controller: caregiverPasswordEditingController,
                   ),
@@ -142,45 +155,31 @@ class _CaregiverLoginState extends State<CaregiverLogin> {
                             MaterialPageRoute(
                                 builder: (context) => ForgotPassword()));
                       },
-                      child: const Text("Forgot password?"),
+                      child: const Text("Forgot Password?",
+                          style: TextStyle(color: Colors.pinkAccent)),
                     ),
                   ],
                 ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text("Don't have an account?"),
-                    // REGISTER
-                    TextButton(
-                      onPressed: () {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => CaregiverRegistration()));
-                      },
-                      child: const Text("Register"),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 20),
                 ElevatedButton(
-                  style: ButtonStyle(
-                    foregroundColor:
-                    MaterialStateProperty.all(Colors.white),
-                    backgroundColor:
-                    MaterialStateProperty.all(Colors.orange[900]),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.pinkAccent,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 50, vertical: 15),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                   onPressed: () async {
-                    final SharedPreferences sharedPreferences =
-                    await SharedPreferences.getInstance();
-                    sharedPreferences.setString(
-                        'email', caregiverEmailEditingController.text);
-                    //Get.to(CaregiverHomepage());
                     login();
                   },
-                  child: Text("Sign in"),
+                  child: const Text("Sign In",
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Color.fromARGB(255, 255, 254, 255),
+                      )),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 20),
                 Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -192,12 +191,13 @@ class _CaregiverLoginState extends State<CaregiverLogin> {
                             MaterialPageRoute(
                                 builder: (context) => ParentLogin()));
                       },
-                      child: const Text("Click here!"),
+                      child: const Text("Click here!",
+                          style: TextStyle(color: Colors.pinkAccent)),
                     ),
                   ],
                 ),
-              ],
-            ),
+               const SizedBox(height: 60),
+            ],
           ),
         ),
       ),

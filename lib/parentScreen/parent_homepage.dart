@@ -161,7 +161,7 @@ class _ParentHomepageState extends State<ParentHomepage> {
       body: RefreshIndicator(
         onRefresh: _refreshData,
         child: SingleChildScrollView(
-          physics: AlwaysScrollableScrollPhysics(),
+          physics: const AlwaysScrollableScrollPhysics(),
           child: Padding(
             padding:
                 const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
@@ -187,7 +187,7 @@ class _ParentHomepageState extends State<ParentHomepage> {
                   children: [
                     // Title for the section
                     Padding(
-                      padding: EdgeInsets.symmetric(vertical: 10.0),
+                      padding: const EdgeInsets.symmetric(vertical: 10.0),
                       child: Text(
                         'Notes from Caregiver',
                         style: GoogleFonts.playfairDisplay(
@@ -290,7 +290,7 @@ class _ParentHomepageState extends State<ParentHomepage> {
                       },
                       child: Container(
                         width: 147,
-                        height: 100,
+                        height: 110,
                         decoration: BoxDecoration(
                           color: Colors.pinkAccent,
                           borderRadius: BorderRadius.circular(20.0),
@@ -304,18 +304,26 @@ class _ParentHomepageState extends State<ParentHomepage> {
                           ],
                         ),
                         padding: const EdgeInsets.all(16.0),
-                        child: const Column(
+                        child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(
-                              Icons.file_copy,
+                            const Icon(
+                              Icons.schedule,
                               color: Colors.white,
-                              size: 30,
+                              size: 28,
                             ),
-                            SizedBox(height: 8),
+                            const SizedBox(height: 8),
                             Text(
-                              'Attendance Arrival',
-                              style: TextStyle(
+                              'Attendance',
+                              style: GoogleFonts.playfairDisplay(
+                                color: Colors.white,
+                                fontSize: 15.0,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              'Arrival',
+                              style: GoogleFonts.playfairDisplay(
                                 color: Colors.white,
                                 fontSize: 15.0,
                                 fontWeight: FontWeight.bold,
@@ -338,7 +346,7 @@ class _ParentHomepageState extends State<ParentHomepage> {
                       },
                       child: Container(
                         width: 147,
-                        height: 100,
+                        height: 110,
                         decoration: BoxDecoration(
                           color: Colors.pinkAccent,
                           borderRadius: BorderRadius.circular(20.0),
@@ -352,18 +360,26 @@ class _ParentHomepageState extends State<ParentHomepage> {
                           ],
                         ),
                         padding: const EdgeInsets.all(16.0),
-                        child: const Column(
+                        child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.schedule,
                               color: Colors.white,
-                              size: 30,
+                              size: 28,
                             ),
-                            SizedBox(height: 8),
+                            const SizedBox(height: 8),
                             Text(
-                              'Attendance Departure',
-                              style: TextStyle(
+                              'Attendance',
+                              style: GoogleFonts.playfairDisplay(
+                                color: Colors.white,
+                                fontSize: 15.0,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              'Departure',
+                              style: GoogleFonts.playfairDisplay(
                                 color: Colors.white,
                                 fontSize: 15.0,
                                 fontWeight: FontWeight.bold,
@@ -404,18 +420,18 @@ class _ParentHomepageState extends State<ParentHomepage> {
                           ],
                         ),
                         padding: const EdgeInsets.all(16.0),
-                        child: const Column(
+                        child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.edit_note,
                               color: Colors.white,
                               size: 30,
                             ),
-                            SizedBox(height: 8),
+                            const SizedBox(height: 8),
                             Text(
                               'Notes',
-                              style: TextStyle(
+                              style: GoogleFonts.playfairDisplay(
                                 color: Colors.white,
                                 fontSize: 15.0,
                                 fontWeight: FontWeight.bold,
@@ -451,18 +467,18 @@ class _ParentHomepageState extends State<ParentHomepage> {
                           ],
                         ),
                         padding: const EdgeInsets.all(16.0),
-                        child: const Column(
+                        child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.sick_outlined,
                               color: Colors.white,
                               size: 30,
                             ),
-                            SizedBox(height: 8),
+                            const SizedBox(height: 8),
                             Text(
                               'Sick',
-                              style: TextStyle(
+                              style: GoogleFonts.playfairDisplay(
                                 color: Colors.white,
                                 fontSize: 15.0,
                                 fontWeight: FontWeight.bold,
@@ -497,17 +513,17 @@ class _ParentHomepageState extends State<ParentHomepage> {
                           ],
                         ),
                         padding: const EdgeInsets.all(16.0),
-                        child: const Column(
+                        child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.person,
                               color: Colors.white,
                               size: 30,
                             ),
                             Text(
                               'Authorize',
-                              style: TextStyle(
+                              style: GoogleFonts.playfairDisplay(
                                 color: Colors.white,
                                 fontSize: 15.0,
                                 fontWeight: FontWeight.bold,
@@ -515,7 +531,7 @@ class _ParentHomepageState extends State<ParentHomepage> {
                             ),
                             Text(
                               'Pick-up',
-                              style: TextStyle(
+                              style: GoogleFonts.playfairDisplay(
                                 color: Colors.white,
                                 fontSize: 15.0,
                                 fontWeight: FontWeight.bold,
@@ -550,23 +566,23 @@ class _ParentHomepageState extends State<ParentHomepage> {
                               color: Colors.grey.withOpacity(0.5),
                               spreadRadius: 5,
                               blurRadius: 7,
-                              offset: Offset(0, 3),
+                              offset: const Offset(0, 3),
                             ),
                           ],
                         ),
-                        padding: EdgeInsets.all(16.0),
-                        child: const Column(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.sentiment_very_satisfied,
                               color: Colors.white,
                               size: 30,
                             ),
-                            SizedBox(height: 8),
+                            const SizedBox(height: 8),
                             Text(
                               'Behaviour',
-                              style: TextStyle(
+                              style: GoogleFonts.playfairDisplay(
                                 color: Colors.white,
                                 fontSize: 15.0,
                                 fontWeight: FontWeight.bold,
@@ -576,7 +592,7 @@ class _ParentHomepageState extends State<ParentHomepage> {
                         ),
                       ),
                     ),
-                    SizedBox(width: 13),
+                    const SizedBox(width: 13),
                     GestureDetector(
                       onTap: () {
                         Navigator.push(
@@ -596,23 +612,23 @@ class _ParentHomepageState extends State<ParentHomepage> {
                               color: Colors.grey.withOpacity(0.5),
                               spreadRadius: 5,
                               blurRadius: 7,
-                              offset: Offset(0, 3),
+                              offset: const Offset(0, 3),
                             ),
                           ],
                         ),
-                        padding: EdgeInsets.all(16.0),
-                        child: const Column(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.trending_up,
                               color: Colors.white,
                               size: 30,
                             ),
-                            SizedBox(height: 8),
+                            const SizedBox(height: 8),
                             Text(
                               'Performance',
-                              style: TextStyle(
+                              style: GoogleFonts.playfairDisplay(
                                 color: Colors.white,
                                 fontSize: 15.0,
                                 fontWeight: FontWeight.bold,
@@ -649,7 +665,8 @@ class _ParentHomepageState extends State<ParentHomepage> {
               leading: const Icon(Icons.home),
               title: const Text('Home'),
               onTap: () {
-                // Update UI based on item selected.
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => ParentHomepage()));
               },
             ),
             ListTile(
@@ -657,7 +674,7 @@ class _ParentHomepageState extends State<ParentHomepage> {
               title: const Text('Profile'),
               onTap: () {
                 Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => ParentProfile()));
+                    MaterialPageRoute(builder: (context) => const ParentProfile()));
               },
             ),
             ListTile(
@@ -704,7 +721,7 @@ class _ParentHomepageState extends State<ParentHomepage> {
       child: ListTile(
         leading: Icon(icon),
         title: Text(title,
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         subtitle: Text(content),
         onTap: () {
           // Handle section tap

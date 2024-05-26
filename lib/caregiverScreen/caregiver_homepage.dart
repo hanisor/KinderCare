@@ -10,6 +10,7 @@ import 'package:kindercare/caregiverScreen/caregiver_note.dart';
 import 'package:kindercare/caregiverScreen/caregiver_performanceReport.dart';
 import 'package:kindercare/caregiverScreen/caregiver_pickup.dart';
 import 'package:kindercare/caregiverScreen/caregiver_profile.dart';
+import 'package:kindercare/caregiverScreen/caregiver_report.dart';
 import 'package:kindercare/caregiverScreen/caregiver_sick.dart';
 import 'package:kindercare/model/note_model.dart';
 import 'package:kindercare/request_controller.dart';
@@ -161,7 +162,7 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
      body: RefreshIndicator(
         onRefresh: _refresh,
         child: SingleChildScrollView(
-          physics: AlwaysScrollableScrollPhysics(),
+          physics: const AlwaysScrollableScrollPhysics(),
           child: Padding(
             padding:
                 const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
@@ -187,7 +188,7 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
                 children: [
                   // Title for the section
                   Padding(
-                    padding: EdgeInsets.symmetric(vertical: 10.0),
+                    padding: const EdgeInsets.symmetric(vertical: 10.0),
                     child: Text(
                       'Notes from Parents',
                       style: GoogleFonts.playfairDisplay(
@@ -289,7 +290,7 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
                     },
                     child: Container(
                       width: 147,
-                      height: 100,
+                      height: 110,
                       decoration: BoxDecoration(
                         color: Colors.pinkAccent,
                         borderRadius: BorderRadius.circular(20.0),
@@ -303,23 +304,31 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
                         ],
                       ),
                       padding: const EdgeInsets.all(16.0),
-                      child: const Column(
+                      child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(
-                            Icons.file_copy,
+                          const Icon(
+                            Icons.schedule,
                             color: Colors.white,
-                            size: 30,
+                            size: 28,
                           ),
-                          SizedBox(height: 8),
+                          const SizedBox(height: 8),
                           Text(
-                            'Attendance Arrival',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 15.0,
-                              fontWeight: FontWeight.bold,
+                              'Attendance',
+                              style: GoogleFonts.playfairDisplay(
+                                color: Colors.white,
+                                fontSize: 15.0,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          ),
+                            Text(
+                              'Arrival',
+                              style: GoogleFonts.playfairDisplay(
+                                color: Colors.white,
+                                fontSize: 15.0,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                         ],
                       ),
                     ),
@@ -335,7 +344,7 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
                     },
                     child: Container(
                       width: 147,
-                      height: 100,
+                      height: 110,
                       decoration: BoxDecoration(
                         color: Colors.pinkAccent,
                         borderRadius: BorderRadius.circular(20.0),
@@ -349,23 +358,31 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
                         ],
                       ),
                       padding: const EdgeInsets.all(16.0),
-                      child: const Column(
+                      child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.schedule,
                             color: Colors.white,
-                            size: 30,
+                            size: 28,
                           ),
-                          SizedBox(height: 8),
+                          const SizedBox(height: 8),
                           Text(
-                            'Attendance Departure',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 15.0,
-                              fontWeight: FontWeight.bold,
+                              'Attendance',
+                              style: GoogleFonts.playfairDisplay(
+                                color: Colors.white,
+                                fontSize: 15.0,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          ),
+                            Text(
+                              'Departure',
+                              style: GoogleFonts.playfairDisplay(
+                                color: Colors.white,
+                                fontSize: 15.0,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                         ],
                       ),
                     ),
@@ -402,22 +419,22 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
                         ],
                       ),
                       padding: const EdgeInsets.all(16.0),
-                      child: const Column(
+                      child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.edit_note,
                             color: Colors.white,
                             size: 30,
                           ),
-                          SizedBox(height: 8),
+                          const SizedBox(height: 8),
                           Text(
                             'Notes',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 15.0,
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: GoogleFonts.playfairDisplay(
+                                color: Colors.white,
+                                fontSize: 15.0,
+                                fontWeight: FontWeight.bold,
+                              ),
                           ),
                         ],
                       ),
@@ -448,22 +465,22 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
                         ],
                       ),
                       padding: const EdgeInsets.all(16.0),
-                      child: const Column(
+                      child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.sick_outlined,
                             color: Colors.white,
                             size: 30,
                           ),
-                          SizedBox(height: 8),
+                          const SizedBox(height: 8),
                           Text(
                             'Sick',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 15.0,
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: GoogleFonts.playfairDisplay(
+                                color: Colors.white,
+                                fontSize: 15.0,
+                                fontWeight: FontWeight.bold,
+                              ),
                           ),
                         ],
                       ),
@@ -494,29 +511,29 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
                         ],
                       ),
                       padding: const EdgeInsets.all(16.0),
-                      child: const Column(
+                      child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.person,
                             color: Colors.white,
                             size: 30,
                           ),
                           Text(
                             'Authorize',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 15.0,
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: GoogleFonts.playfairDisplay(
+                                color: Colors.white,
+                                fontSize: 15.0,
+                                fontWeight: FontWeight.bold,
+                              ),
                           ),
                           Text(
                             'Pick-up',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 15.0,
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: GoogleFonts.playfairDisplay(
+                                color: Colors.white,
+                                fontSize: 15.0,
+                                fontWeight: FontWeight.bold,
+                              ),
                           ),
                         ],
                       ),
@@ -552,22 +569,22 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
                         ],
                       ),
                       padding: const EdgeInsets.all(16.0),
-                      child: const Column(
+                      child:  Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.sentiment_very_satisfied,
                             color: Colors.white,
                             size: 30,
                           ),
-                          SizedBox(height: 8),
+                          const SizedBox(height: 8),
                           Text(
                             'Behaviour',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 15.0,
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: GoogleFonts.playfairDisplay(
+                                color: Colors.white,
+                                fontSize: 15.0,
+                                fontWeight: FontWeight.bold,
+                              ),
                           ),
                         ],
                       ),
@@ -598,21 +615,21 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
                         ],
                       ),
                       padding: const EdgeInsets.all(16.0),
-                      child: const Column(
+                      child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.trending_up,
                             color: Colors.white,
                             size: 30,
                           ),
-                          SizedBox(height: 8),
+                          const SizedBox(height: 8),
                           Text(
                             'Performance',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 15.0,
-                              fontWeight: FontWeight.bold,
+                            style: GoogleFonts.playfairDisplay(
+                                color: Colors.white,
+                                fontSize: 15.0,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
                           ],
@@ -660,6 +677,16 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
                   context,
                   MaterialPageRoute(
                       builder: (context) => const CaregiverProfile()),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.file_copy),
+              title: const Text('Report'),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => CaregiverReport()),
                 );
               },
             ),
