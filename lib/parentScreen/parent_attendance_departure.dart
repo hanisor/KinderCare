@@ -23,72 +23,71 @@ class _ParentAttendanceDepartureState extends State<ParentAttendanceDeparture> {
     super.initState();
   }
 
-  Future<void> recordAttendance(int childGroupId) async {
-  try {
-    DateTime now = DateTime.now();
-    String formattedDate = DateFormat('yyyy-MM-dd HH:mm:ss').format(now);
-    RequestController req = RequestController(path: 'add-attendance-departure');
+  Future<void> recordAttendance(int childGroupId, AttendanceModel attendanceModel, ChildModel child) async {
+    try {
+      DateTime now = DateTime.now();
+      String formattedDate = DateFormat('yyyy-MM-dd HH:mm:ss').format(now);
+      RequestController req = RequestController(path: 'add-attendance-departure');
 
-    req.setBody({
-      'date_time_leave': formattedDate,
-      'child_group_id': childGroupId,
-    });
+      req.setBody({
+        'date_time_leave': formattedDate,
+        'child_group_id': childGroupId,
+      });
 
-    var response = await req.post();
-    var responseBody = jsonDecode(response.body);
+      var response = await req.post();
+      var responseBody = jsonDecode(response.body);
 
-    if (response.statusCode == 200) {
-      if (responseBody.containsKey('message')) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(responseBody['message'])),
+      if (response.statusCode == 200) {
+        if (responseBody.containsKey('message')) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(responseBody['message'])),
+          );
+          // Remove the child group ID from the recordedAttendanceChildren set
+          recordedAttendanceChildren.remove(childGroupId);
+          // Clear the attendance model by removing the child from the selected children list
+          attendanceModel.removeChild(child);
+        }
+      } else if (response.statusCode == 422) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Attendance Error'),
+            content: const Text(
+                'Attendance already recorded for this child group today. Do you want to clear this record?'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: const Text('No'),
+              ),
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    recordedAttendanceChildren.remove(childGroupId);
+                  });
+                  Navigator.pop(context);
+                },
+                child: const Text('Yes'),
+              ),
+            ],
+          ),
         );
-        // Remove the child group ID from the recordedAttendanceChildren set
-        recordedAttendanceChildren.remove(childGroupId);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error recording attendance: ${response.statusCode}')),
+        );
       }
-    } else if (response.statusCode == 422) {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Attendance Error'),
-          content: const Text(
-              'Attendance already recorded for this child group today. Do you want to clear this record?'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text('No'),
-            ),
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  recordedAttendanceChildren.remove(childGroupId);
-                });
-                Navigator.pop(context);
-              },
-              child: const Text('Yes'),
-            ),
-          ],
-        ),
-      );
-    } else {
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error recording attendance: ${response.statusCode}')),
+        const SnackBar(content: Text('Error recording attendance')),
       );
     }
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Error recording attendance')),
-    );
   }
-}
 
-
-
-  Future<void> fetchChildGroupId(int? childId) async {
+  Future<void> fetchChildGroupId(int? childId, AttendanceModel attendanceModel, ChildModel child) async {
     try {
       RequestController req = RequestController(path: 'attendance/$childId/childgroupid');
-
       await req.get();
       var response = req.result();
 
@@ -97,7 +96,7 @@ class _ParentAttendanceDepartureState extends State<ParentAttendanceDeparture> {
           final responseData = response as Map<String, dynamic>;
           final childGroupId = responseData['child_group_id'];
 
-          await recordAttendance(childGroupId);
+          await recordAttendance(childGroupId, attendanceModel, child);
 
           // Use the retrieved child group ID as needed
           print('Child Group ID: $childGroupId');
@@ -120,7 +119,7 @@ class _ParentAttendanceDepartureState extends State<ParentAttendanceDeparture> {
     }
   }
 
-  void confirmAttendance(ChildModel child) async {
+  void confirmAttendance(ChildModel child, AttendanceModel attendanceModel) async {
     bool? confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -140,7 +139,7 @@ class _ParentAttendanceDepartureState extends State<ParentAttendanceDeparture> {
     );
 
     if (confirm == true) {
-      await fetchChildGroupId(child.childId);
+      await fetchChildGroupId(child.childId, attendanceModel, child);
     }
   }
 
@@ -153,7 +152,6 @@ class _ParentAttendanceDepartureState extends State<ParentAttendanceDeparture> {
       body: Consumer<AttendanceModel>(
         builder: (context, attendanceModel, child) {
           final selectedChildren = attendanceModel.selectedChildren;
-
           final dateTime = attendanceModel.selectedDateTime;
           print("Selected datetime: $dateTime");
 
@@ -175,7 +173,7 @@ class _ParentAttendanceDepartureState extends State<ParentAttendanceDeparture> {
                     if (!recordedAttendanceChildren.contains(child.childId)) {
                       return Card(
                         child: ListTile(
-                          onTap: () => confirmAttendance(child),
+                          onTap: () => confirmAttendance(child, attendanceModel),
                           leading: CircleAvatar(
                             child: Text(child.childName[0]),
                           ),

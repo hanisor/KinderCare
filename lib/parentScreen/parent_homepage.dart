@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:kindercare/model/note_model.dart';
+import 'package:kindercare/parentScreen/parent_attendanceRecord.dart';
 import 'package:kindercare/parentScreen/parent_attendance_arrival.dart';
 import 'package:kindercare/parentScreen/parent_attendance_departure.dart';
 import 'package:kindercare/parentScreen/parent_behaviour.dart';
@@ -675,6 +676,16 @@ class _ParentHomepageState extends State<ParentHomepage> {
               onTap: () {
                 Navigator.push(context,
                     MaterialPageRoute(builder: (context) => const ParentProfile()));
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.file_copy),
+              title: const Text('Attendance Report'),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ParentAttendanceRecord (parentId: parentId)),
+                );
               },
             ),
             ListTile(
