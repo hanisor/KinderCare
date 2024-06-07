@@ -81,7 +81,7 @@ class _ParentPickupReportState extends State<ParentPickupReport> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Pickup Report'),
+        title: const Text('Pickup Report '),
       ),
       body: RefreshIndicator(
         onRefresh: fetchRelative,
@@ -124,6 +124,7 @@ class _ParentPickupReportState extends State<ParentPickupReport> {
                         const SizedBox(height: 20),
                         ElevatedButton(
                           onPressed: () {
+                            print("parentidd: ${widget.parentId}");
                             Navigator.push(
                               context,
                               MaterialPageRoute(
@@ -187,7 +188,8 @@ class _ParentPickupReportState extends State<ParentPickupReport> {
                             child: const Text(
                               'Delete Report',
                               style: TextStyle(
-                                color: Color.fromARGB(255, 255, 255, 255), // Custom font color
+                                color: Color.fromARGB(
+                                    255, 255, 255, 255), // Custom font color
                               ),
                             ),
                           ),

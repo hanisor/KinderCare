@@ -139,6 +139,8 @@ class _CaregiverPerformanceReportState
           IconButton(
             icon: Icon(Icons.playlist_add),
             onPressed: () {
+                      print("Navigating to CaregiverPerformance with caregiverId: ${widget.caregiverId}"); // Debugging line
+
               Navigator.push(
                 context,
                 MaterialPageRoute(

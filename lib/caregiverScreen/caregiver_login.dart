@@ -5,7 +5,6 @@ import 'package:kindercare/parentScreen/parent_login.dart';
 import 'package:kindercare/request_controller.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'caregiver_homepage.dart';
-import 'caregiver_registration.dart';
 import 'forgot_password.dart';
 
 class CaregiverLogin extends StatefulWidget {

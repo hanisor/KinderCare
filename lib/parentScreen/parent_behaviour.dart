@@ -42,6 +42,8 @@ class _ParentBehaviourState extends State<ParentBehaviour> {
           print("Invalid children data format"); // Debugging line
         }
       });
+      // Fetch behaviours after children data has been fetched
+      await fetchBehaviours();
     } else {
       print("Failed to fetch children data"); // Debugging line
     }
@@ -75,14 +77,13 @@ class _ParentBehaviourState extends State<ParentBehaviour> {
   }
 
   Future<void> _refreshData() async {
-    await fetchBehaviours();
+    await getChildrenData();
   }
 
   @override
   void initState() {
     super.initState();
-    fetchBehaviours(); // Fetch behaviours when the widget initializes
-    getChildrenData();
+    getChildrenData(); // Fetch children data when the widget initializes
   }
 
   // Group behaviours by month and then by child name

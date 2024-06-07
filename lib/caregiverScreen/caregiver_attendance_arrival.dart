@@ -130,15 +130,15 @@ class _CaregiverAttendanceArrivalState
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
-            title: Text('Attendance Error'),
-            content: Text(
+            title: const Text('Attendance Error'),
+            content: const Text(
                 'Attendance already recorded for this child group today. Do you want to clear this record?'),
             actions: [
               TextButton(
                 onPressed: () {
                   Navigator.pop(context); // Close the dialog
                 },
-                child: Text('No'),
+                child: const Text('No'),
               ),
               TextButton(
                 onPressed: () {
@@ -149,7 +149,7 @@ class _CaregiverAttendanceArrivalState
                   });
                   Navigator.pop(context); // Close the dialog
                 },
-                child: Text('Yes'),
+                child: const Text('Yes'),
               ),
             ],
           ),
@@ -164,7 +164,7 @@ class _CaregiverAttendanceArrivalState
     } catch (e) {
       print("Error recording attendance: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error recording attendance')),
+        const SnackBar(content: Text('Error recording attendance')),
       );
     }
   }

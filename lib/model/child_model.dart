@@ -41,7 +41,7 @@ class ChildModel {
       childAllergies: json['allergy'] as String? ?? '',
       childStatus: json['status'] as String? ?? '',
       parentId: json['guardian_id'] as int?,
-      performances: performances,
+      performances: performances.isNotEmpty ? performances : [],
     );
   }
 

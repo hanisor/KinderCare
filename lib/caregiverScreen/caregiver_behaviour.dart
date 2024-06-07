@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:kindercare/model/behaviour_model.dart';
 import 'package:kindercare/model/child_model.dart';
+import 'package:kindercare/model/performance_model.dart';
 import 'package:kindercare/request_controller.dart';
 
 class CaregiverBehaviour extends StatefulWidget {
@@ -30,54 +31,55 @@ class _CaregiverBehaviourState extends State<CaregiverBehaviour> {
   }
 
   Future<void> getChildrenData() async {
-    print(
-        "Fetching children data for caregiverId: ${widget.caregiverId}"); // Debugging line
+  print("Fetching children data for caregiverId: ${widget.caregiverId}"); // Debugging line
 
-    try {
-      RequestController req = RequestController(
-          path: 'child-group/caregiverId/${widget.caregiverId}');
-      await req.get();
-      var response = req.result();
-      print("Request result: $response"); // Print the response to see its type
+  try {
+    RequestController req = RequestController(
+        path: 'child-group/caregiverId/${widget.caregiverId}');
+    await req.get();
+    var response = req.result();
+    print("Request result: $response"); // Print the response to see its type
 
-      if (response != null && response.containsKey('child_group')) {
-        setState(() {
-          var childrenData = response['child_group'];
-          print("Children Data: $childrenData"); // Debugging line
+    if (response != null && response.containsKey('child_group')) {
+      setState(() {
+        var childrenData = response['child_group'];
+        print("Children Dataaaa: $childrenData"); // Debugging line
 
-          if (childrenData is List) {
-            childrenList =
-                List<ChildModel>.from(childrenData.map((x) => ChildModel(
-                      childId: int.tryParse(x['id'].toString()),
-                      childName: x['name'] as String,
-                      childDOB: x['date_of_birth'] as String,
-                      childGender: x['gender'] as String,
-                      childMykidNumber: x['my_kid_number'] as String,
-                      childAllergies: x['allergy'] as String,
-                      childStatus:  x['status'] as String,
-                      parentId: int.tryParse(x['guardian_id'].toString()), 
-                      performances: [],
-                    )));
+        if (childrenData is List) {
+          childrenList = List<ChildModel>.from(childrenData.map((x) => ChildModel(
+                childId: int.tryParse(x['id']?.toString() ?? ''),
+                childName: x['name'] as String? ?? '',
+                childDOB: x['date_of_birth'] as String? ?? '',
+                childGender: x['gender'] as String? ?? '',
+                childMykidNumber: x['my_kid_number'] as String? ?? '',
+                childAllergies: x['allergy'] as String? ?? '',
+                childStatus: x['status'] as String? ?? '',
+                parentId: int.tryParse(x['guardian_id']?.toString() ?? ''),
+                performances: x['performances'] != null && x['performances'] is List
+                    ? List<PerformanceModel>.from(
+                        (x['performances'] as List)
+                        .map((e) => PerformanceModel.fromJson(e as Map<String, dynamic>))
+                      )
+                    : [],
+              )));
 
-            // Set selectedChild if the list is not empty
-            if (childrenList.isNotEmpty) {
-              selectedChild = childrenList[0];
-              print(
-                  'Selected child dataaaa: ${selectedChild!.childId.toString()}');
-            }
-          } else {
-            print("Invalid children data format"); // Debugging line
+          // Set selectedChild if the list is not empty
+          if (childrenList.isNotEmpty) {
+            selectedChild = childrenList[0];
+            print('Selected child dataaaa: ${selectedChild!.childId.toString()}');
           }
-        });
-      } else {
-        print(
-            "Failed to fetch children data or key 'child_group' not found"); // Debugging line
-      }
-      print("childrenList: $childrenList");
-    } catch (e) {
-      print("Error during network request: $e");
+        } else {
+          print("Invalid children data format"); // Debugging line
+        }
+      });
+    } else {
+      print("Failed to fetch children data or key 'child_group' not found"); // Debugging line
     }
+    print("childrenList: $childrenList");
+  } catch (e) {
+    print("Error during network request: $e");
   }
+}
 
   Future<void> addBehaviour() async {
     try {

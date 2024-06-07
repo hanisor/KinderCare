@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:kindercare/caregiverScreen/caregiver_performanceReport.dart';
 import 'package:kindercare/model/child_model.dart';
+import 'package:kindercare/model/performance_model.dart';
 import 'package:kindercare/request_controller.dart';
 import 'package:intl/intl.dart'; // Add this import
 
@@ -77,69 +78,72 @@ class _CaregiverPerformanceState extends State<CaregiverPerformance> {
   }
 
   Future<void> getChildrenData() async {
-    print(
-        "Fetching children data for caregiverId: ${widget.caregiverId}"); // Debugging line
+  print("Fetching children data for caregiverId: ${widget.caregiverId}"); // Debugging line
 
-    try {
-      RequestController req = RequestController(
-          path: 'child-group/caregiverId/${widget.caregiverId}');
-      await req.get();
-      var response = req.result();
-      print("Request result: $response"); // Print the response to see its type
+  try {
+    RequestController req = RequestController(
+        path: 'child-group/caregiverId/${widget.caregiverId}');
+    await req.get();
+    var response = req.result();
+    print("Request result: $response"); // Print the response to see its type
 
-      if (response != null && response.containsKey('child_group')) {
-        setState(() {
-          var childrenData = response['child_group'];
-          print("Children Data: $childrenData"); // Debugging line
+    if (response != null && response.containsKey('child_group')) {
+      setState(() {
+        var childrenData = response['child_group'];
+        print("Children Data: $childrenData"); // Debugging line
 
-          if (childrenData is List) {
-            List<ChildModel> allChildrenList =
-                List<ChildModel>.from(childrenData.map((x) => ChildModel(
-                      childId: int.tryParse(x['id'].toString()) ?? 0,
-                      childName: x['name'] as String,
-                      childDOB: x['date_of_birth'] as String,
-                      childGender: x['gender'] as String,
-                      childMykidNumber: x['my_kid_number'] as String,
-                      childAllergies: x['allergy'] as String,
-                      childStatus:  x['status'] as String,
-                      parentId: int.tryParse(x['guardian_id'].toString()) ?? 0,
-                      performances: [],
-                    )));
+        if (childrenData is List) {
+          List<ChildModel> allChildrenList =
+              List<ChildModel>.from(childrenData.map((x) => ChildModel(
+                    childId: int.tryParse(x['id']?.toString() ?? '0') ?? 0,
+                    childName: x['name'] as String? ?? '',
+                    childDOB: x['date_of_birth'] as String? ?? '',
+                    childGender: x['gender'] as String? ?? '',
+                    childMykidNumber: x['my_kid_number'] as String? ?? '',
+                    childAllergies: x['allergy'] as String? ?? '',
+                    childStatus: x['status'] as String? ?? '',
+                    parentId: int.tryParse(x['guardian_id']?.toString() ?? '0') ?? 0,
+                    performances: x['performances'] != null && x['performances'] is List
+                        ? List<PerformanceModel>.from(
+                            (x['performances'] as List)
+                                .map((e) => PerformanceModel.fromJson(e as Map<String, dynamic>))
+                          )
+                        : [],
+                  )));
 
-            // Group children by age
-            childrenByAge.clear();
-            allChildrenList.forEach((child) {
-              try {
-                DateTime? dob = parseDate(child.childDOB);
-                if (dob != null) {
-                  int age = calculateAge(dob); // Calculate age here
-                  if (!childrenByAge.containsKey(age)) {
-                    childrenByAge[age] = [];
-                  }
-                  childrenByAge[age]!.add(child);
+          // Group children by age
+          childrenByAge.clear();
+          allChildrenList.forEach((child) {
+            try {
+              DateTime? dob = parseDate(child.childDOB);
+              if (dob != null) {
+                int age = calculateAge(dob); // Calculate age here
+                if (!childrenByAge.containsKey(age)) {
+                  childrenByAge[age] = [];
                 }
-              } catch (e) {
-                print(
-                    "Invalid date format for child: ${child.childName}, DOB: ${child.childDOB}"); // Debugging line
+                childrenByAge[age]!.add(child);
               }
-            });
+            } catch (e) {
+              print("Invalid date format for child: ${child.childName}, DOB: ${child.childDOB}"); // Debugging line
+            }
+          });
 
-            // Debugging lines
-            childrenByAge.forEach((age, children) {
-              print('Age $age: ${children.map((c) => c.childName).toList()}');
-            });
-          } else {
-            print("Invalid children data format"); // Debugging line
-          }
-        });
-      } else {
-        print(
-            "Failed to fetch children data or key 'child_group' not found"); // Debugging line
-      }
-    } catch (e) {
-      print("Error during network request: $e");
+          // Debugging lines
+          childrenByAge.forEach((age, children) {
+            print('Age $age: ${children.map((c) => c.childName).toList()}');
+          });
+        } else {
+          print("Invalid children data format"); // Debugging line
+        }
+      });
+    } else {
+      print("Failed to fetch children data or key 'child_group' not found"); // Debugging line
     }
+  } catch (e) {
+    print("Error during network request: $e");
   }
+}
+
 
   // Method to add performance
   Future<void> addPerformance() async {
@@ -188,60 +192,91 @@ class _CaregiverPerformanceState extends State<CaregiverPerformance> {
   }
 
   Widget buildSkillsCard() {
-    if (selectedChild == null) {
-      print('Selected child or childDOB is null.');
-      return SizedBox.shrink();
+  if (selectedChild == null) {
+    print('Selected child or childDOB is null.');
+    return SizedBox.shrink();
+  }
+
+  print('Selected child: ${selectedChild!.childName}');
+  print('Selected child DOB: ${selectedChild!.childDOB}');
+
+  final age = calculateAge(parseDate(selectedChild!.childDOB)!);
+  print('Calculated age: $age');
+
+  final selectedSkills = skillsByAge[age];
+  if (selectedSkills == null) {
+    print('No skills found for $age.');
+    return SizedBox.shrink();
+  }
+
+  print('Selected skills for age $age: $selectedSkills');
+
+  // Group performances by date
+  Map<String, List<Map<String, dynamic>>> performancesByDate = {};
+  for (var performance in selectedChild!.performances) {
+    String date = performance.date; // Assuming performance has a date field
+    if (!performancesByDate.containsKey(date)) {
+      performancesByDate[date] = [];
     }
+    performancesByDate[date]!.add({
+      'skill': performance.skill, // Assuming performance has a skill field
+      'level': performance.level, // Assuming performance has a level field
+    });
+  }
 
-    print('Selected child: ${selectedChild!.childName}');
-    print('Selected child DOB: ${selectedChild!.childDOB}');
-
-    final age = calculateAge(parseDate(selectedChild!.childDOB)!);
-    print('Calculated age: $age');
-
-    final selectedSkills = skillsByAge[age];
-    if (selectedSkills == null) {
-      print('No skills found for $age.');
-      return SizedBox.shrink();
-    }
-
-    print('Selected skills for age $age: $selectedSkills');
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: selectedSkills
-              .map((String skill) => Row(
-                    children: [
-                      Expanded(child: Text(skill)),
-                      Row(
-                        children: List.generate(
-                          3,
-                          (index) => IconButton(
-                            icon: Icon(
-                              Icons.star,
-                              color: skillLevels[skill] != null &&
-                                      skillLevels[skill]! >= index + 1
-                                  ? Colors.yellow
-                                  : Colors.grey,
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                skillLevels[skill] = index + 1;
-                              });
-                            },
-                          ),
-                        ),
-                      ),
-                    ],
-                  ))
-              .toList(),
+  // Create a list of widgets for each date and its performances
+  List<Widget> performanceWidgets = [];
+  performancesByDate.forEach((date, performances) {
+    performanceWidgets.add(
+      Padding(
+        padding: const EdgeInsets.only(top: 8.0, bottom: 4.0),
+        child: Text(
+          date,
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
     );
-  }
+
+    for (var performance in performances) {
+      performanceWidgets.add(
+        Row(
+          children: [
+            Expanded(
+              flex: 2,
+              child: Text(performance['skill']),
+            ),
+            Expanded(
+              flex: 1,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: List.generate(
+                  3,
+                  (index) => Icon(
+                    Icons.star,
+                    color: performance['level'] != null &&
+                            performance['level'] >= index + 1
+                        ? Colors.yellow
+                        : Colors.grey,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+  });
+
+  return Card(
+    child: Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: performanceWidgets,
+      ),
+    ),
+  );
+}
 
   @override
   void initState() {

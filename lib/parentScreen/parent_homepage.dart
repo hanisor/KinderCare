@@ -12,6 +12,7 @@ import 'package:kindercare/parentScreen/parent_note.dart';
 import 'package:kindercare/parentScreen/parent_performance.dart';
 import 'package:kindercare/parentScreen/parent_pickuprepoprt.dart';
 import 'package:kindercare/parentScreen/parent_profile.dart';
+import 'package:kindercare/parentScreen/parent_sick.dart';
 import 'package:kindercare/role.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../request_controller.dart';
@@ -449,7 +450,7 @@ class _ParentHomepageState extends State<ParentHomepage> {
                           context,
                           MaterialPageRoute(
                               builder: (context) =>
-                                  ParentNote(parentId: parentId)),
+                                  ParentSickness(parentId: parentId)),
                         );
                       },
                       child: Container(
@@ -495,7 +496,7 @@ class _ParentHomepageState extends State<ParentHomepage> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => ParentPickupReport()),
+                              builder: (context) => ParentPickupReport(parentId: parentId)),
                         );
                       },
                       child: Container(
