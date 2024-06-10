@@ -226,15 +226,7 @@ class _ParentNoteState extends State<ParentNote> {
               if (selectedCaregiver != null)
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 20),
-                    Text(
-                      "Ic Number: ${selectedCaregiver!.caregiverICNumber}",
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                  children: [                  
                     const SizedBox(height: 8),
                     Text(
                       "Phone number: ${selectedCaregiver!.caregiverPhoneNumber}",

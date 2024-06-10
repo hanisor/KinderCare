@@ -173,22 +173,19 @@ class _ParentPerformanceState extends State<ParentPerformance> {
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
-                                          Text(
-                                            'Date: ${DateFormat('dd/MM/yyyy').format(DateTime.parse(performance.date))}',
-                                            style: const TextStyle(
-                                                fontWeight: FontWeight.bold),
-                                          ),
+                                          
                                           Row(
-                                            children: List.generate(5, (index) {
-                                              return Icon(
-                                                index <
-                                                        int.tryParse(
-                                                            performance.level)!
-                                                    ? Icons.star
-                                                    : Icons.star_border,
-                                                color: Colors.amber,
-                                              );
-                                            }),
+                                            children: [
+                                              for (int i = 0; i < 3; i++)
+                                                Icon(
+                                                  i <
+                                                          int.tryParse(
+                                                              performance.level)!
+                                                      ? Icons.star
+                                                      : Icons.star_border,
+                                                  color: Colors.amber,
+                                                ),
+                                            ],
                                           ),
                                         ],
                                       ),

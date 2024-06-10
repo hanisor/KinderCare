@@ -139,13 +139,14 @@ class _CaregiverPerformanceReportState
           IconButton(
             icon: Icon(Icons.playlist_add),
             onPressed: () {
-                      print("Navigating to CaregiverPerformance with caregiverId: ${widget.caregiverId}"); // Debugging line
+              print(
+                  "Navigating to CaregiverPerformance with caregiverId: ${widget.caregiverId}"); // Debugging line
 
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) =>
-                      CaregiverPerformance(caregiverId: widget.caregiverId)),
+                    builder: (context) =>
+                        CaregiverPerformance(caregiverId: widget.caregiverId)),
               );
             },
           ),
@@ -175,6 +176,7 @@ class _CaregiverPerformanceReportState
                           monthYear,
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
+                            fontSize: 18,
                           ),
                         ),
                         children: performancesByAge.keys.map((age) {
@@ -204,6 +206,7 @@ class _CaregiverPerformanceReportState
                                   'Age: $age',
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
+                                    fontSize: 16,
                                   ),
                                 ),
                                 children: sortedChildren.map((childName) {
@@ -212,8 +215,23 @@ class _CaregiverPerformanceReportState
                                   performances.sort((a, b) =>
                                       DateTime.parse(a.date)
                                           .compareTo(DateTime.parse(b.date)));
+
+                                  // Group performances by date
+                                  Map<String, List<PerformanceModel>>
+                                      groupedPerformances = {};
+                                  for (var performance in performances) {
+                                    if (!groupedPerformances
+                                        .containsKey(performance.date)) {
+                                      groupedPerformances[performance.date] =
+                                          [];
+                                    }
+                                    groupedPerformances[performance.date]!
+                                        .add(performance);
+                                  }
+
                                   return Padding(
-                                    padding: const EdgeInsets.all(8.0),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 4.0),
                                     child: Card(
                                       shape: RoundedRectangleBorder(
                                         borderRadius:
@@ -221,7 +239,11 @@ class _CaregiverPerformanceReportState
                                       ),
                                       child: ExpansionTile(
                                         title: Text(childName),
-                                        children: performances.map((performance) {
+                                        children: groupedPerformances.keys
+                                            .map((date) {
+                                          final performancesOnDate =
+                                              groupedPerformances[date]!;
+
                                           return Padding(
                                             padding: const EdgeInsets.symmetric(
                                                 vertical: 4.0),
@@ -229,22 +251,59 @@ class _CaregiverPerformanceReportState
                                               crossAxisAlignment:
                                                   CrossAxisAlignment.start,
                                               children: [
-                                                Text(
-                                                    'Date: ${DateFormat('dd/MM/yyyy').format(DateTime.parse(performance.date))}'),
-                                                Text('Skill: ${performance.skill}'),
-                                                RatingBarIndicator(
-                                                  rating: double.tryParse(
-                                                          performance.level) ??
-                                                      0,
-                                                  itemBuilder:
-                                                      (context, index) => Icon(
-                                                    Icons.star,
-                                                    color: Colors.amber,
-                                                  ),
-                                                  itemCount: 5,
-                                                  itemSize: 20.0,
-                                                  direction: Axis.horizontal,
+                                                Padding(
+                                                  padding: const EdgeInsets
+                                                      .symmetric(
+                                                      horizontal: 16.0),
+                                                  
                                                 ),
+                                                ...performancesOnDate
+                                                    .map((performance) {
+                                                  return Padding(
+                                                    padding: const EdgeInsets
+                                                        .symmetric(
+                                                        vertical: 4.0),
+                                                    child: Row(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .spaceBetween,
+                                                      children: [
+                                                        Expanded(
+                                                          child: Padding(
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .only(
+                                                                    left: 16.0),
+                                                            child: Text(
+                                                                performance
+                                                                    .skill),
+                                                          ),
+                                                        ),
+                                                        Expanded(
+                                                          child:
+                                                              RatingBarIndicator(
+                                                            rating: double.tryParse(
+                                                                    performance
+                                                                        .level) ??
+                                                                0,
+                                                            itemBuilder:
+                                                                (context,
+                                                                        index) =>
+                                                                    Icon(
+                                                              Icons.star,
+                                                              color:
+                                                                  Colors.amber,
+                                                            ),
+                                                            itemCount: 3,
+                                                            itemSize: 20.0,
+                                                            direction:
+                                                                Axis.horizontal,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  );
+                                                }).toList(),
                                               ],
                                             ),
                                           );
