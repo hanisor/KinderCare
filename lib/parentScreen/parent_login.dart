@@ -6,6 +6,7 @@ import 'package:kindercare/parentScreen/parent_homepage.dart';
 import 'package:kindercare/request_controller.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../caregiverScreen/forgot_password.dart';
+import 'package:onesignal_flutter/onesignal_flutter.dart';
 
 class ParentLogin extends StatefulWidget {
   const ParentLogin({Key? key}) : super(key: key);
@@ -42,11 +43,14 @@ class _ParentLoginState extends State<ParentLogin> {
       // store token in shared preferences
       sharedPreferences.setString("token", token);
       sharedPreferences.setString("email", parentEmail);
+      //print('OneSignal.login = $parentEmail');
+      //OneSignal.login(parentEmail);
+
 
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => ParentHomepage()),
-      );
+      );  
     } else {
       // Handle invalid login response
       Fluttertoast.showToast(

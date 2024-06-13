@@ -19,9 +19,7 @@ class CaregiverAttendanceArrival extends StatefulWidget {
 class _CaregiverAttendanceArrivalState
     extends State<CaregiverAttendanceArrival> {
   List<ChildModel> childrenList = [];
-  ChildModel? selectedChild;
-  Set<int> recordedAttendanceChildren =
-      {}; // Track children with recorded attendance
+  Set<int> recordedAttendanceChildren = {}; // Track children with recorded attendance
 
   @override
   void initState() {
@@ -56,10 +54,6 @@ class _CaregiverAttendanceArrivalState
                 performances: [],
               );
             }));
-
-            if (childrenList.isNotEmpty) {
-              selectedChild = childrenList[0];
-            }
           }
         });
       }
@@ -144,8 +138,7 @@ class _CaregiverAttendanceArrivalState
                 onPressed: () {
                   setState(() {
                     recordedAttendanceChildren.add(childGroupId);
-                    childrenList
-                        .removeWhere((child) => child.childId == childGroupId);
+                    childrenList.removeWhere((child) => child.childId == childGroupId);
                   });
                   Navigator.pop(context); // Close the dialog
                 },
@@ -157,8 +150,7 @@ class _CaregiverAttendanceArrivalState
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content:
-                  Text('Error recording attendance: ${response.statusCode}')),
+              content: Text('Error recording attendance: ${response.statusCode}')),
         );
       }
     } catch (e) {
@@ -187,12 +179,12 @@ class _CaregiverAttendanceArrivalState
         builder: (context, attendanceModel, child) {
           final dateTime = attendanceModel.selectedDateTime;
 
-          // Filter the childrenList to include only those which are not recorded
+          // Filter the childrenList to include only those which are not recorded and are unique
           final filteredChildrenList = attendanceModel.selectedChildren
               .where((child) =>
-                  childrenList.any((fetchedChild) =>
-                      fetchedChild.childId == child.childId) &&
+                  childrenList.any((fetchedChild) => fetchedChild.childId == child.childId) &&
                   !recordedAttendanceChildren.contains(child.childId))
+              .toSet()
               .toList();
 
           return Column(
@@ -213,8 +205,7 @@ class _CaregiverAttendanceArrivalState
                       child: ListTile(
                         onTap: () {
                           if (widget.caregiverId != null) {
-                            fetchGroupId(widget.caregiverId!,
-                                child.childId); // Pass the correct child ID
+                            fetchGroupId(widget.caregiverId!, child.childId); // Pass the correct child ID
                           }
                         },
                         leading: CircleAvatar(
