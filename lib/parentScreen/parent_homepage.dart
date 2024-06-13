@@ -33,10 +33,10 @@ class _ParentHomepageState extends State<ParentHomepage> {
 
   Future<void> fetchParentDetails() async {
     try {
-
-      SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+      SharedPreferences sharedPreferences =
+          await SharedPreferences.getInstance();
       String? email = sharedPreferences.getString('email');
-    
+
       print('parent email : $email');
       final data = await getParentDetails(email);
       print('Response Data: $data');
@@ -137,6 +137,7 @@ class _ParentHomepageState extends State<ParentHomepage> {
   @override
   void initState() {
     super.initState();
+    fetchNotesByCaregiver();
     fetchParentDetails(); // Call fetchParentDetails when the widget is initialized
     print('InitState: ParentUsername: $parentUsername');
   }
@@ -496,7 +497,8 @@ class _ParentHomepageState extends State<ParentHomepage> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => ParentPickupReport(parentId: parentId)),
+                              builder: (context) =>
+                                  ParentPickupReport(parentId: parentId)),
                         );
                       },
                       child: Container(
@@ -675,8 +677,10 @@ class _ParentHomepageState extends State<ParentHomepage> {
               leading: const Icon(Icons.account_circle),
               title: const Text('Profile'),
               onTap: () {
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => const ParentProfile()));
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const ParentProfile()));
               },
             ),
             ListTile(
@@ -685,7 +689,9 @@ class _ParentHomepageState extends State<ParentHomepage> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => ParentAttendanceRecord (parentId: parentId)),
+                  MaterialPageRoute(
+                      builder: (context) =>
+                          ParentAttendanceRecord(parentId: parentId)),
                 );
               },
             ),

@@ -43,8 +43,8 @@ class _ParentLoginState extends State<ParentLogin> {
       // store token in shared preferences
       sharedPreferences.setString("token", token);
       sharedPreferences.setString("email", parentEmail);
-      //print('OneSignal.login = $parentEmail');
-      //OneSignal.login(parentEmail);
+      print('OneSignal.login = $parentEmail');
+      OneSignal.login(parentEmail);
 
 
       Navigator.push(

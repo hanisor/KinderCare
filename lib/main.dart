@@ -15,7 +15,7 @@ Future<void> main() async {
   OneSignal.Notifications.addPermissionObserver((state) {
     print("Has permission " + state.toString());
   });
-  OneSignal.login("hanis");
+  //OneSignal.login("sofia@gmail.com");
 
   runApp(
     MultiProvider(

@@ -1,5 +1,7 @@
 import 'package:kindercare/model/performance_model.dart';
 
+import 'parent_model.dart';
+
 class ChildModel {
   int? childId;
   final String childName;
@@ -10,6 +12,7 @@ class ChildModel {
   final String childStatus;
   int? parentId;
   List<PerformanceModel> performances;
+  ParentModel? guardian; // Add guardian field
 
   ChildModel({
     this.childId,
@@ -21,6 +24,7 @@ class ChildModel {
     required this.childStatus,
     this.parentId,
     required this.performances,
+    this.guardian,
   });
 
   factory ChildModel.fromJson(Map<String, dynamic> json) {
@@ -42,6 +46,9 @@ class ChildModel {
       childStatus: json['status'] as String? ?? '',
       parentId: json['guardian_id'] as int?,
       performances: performances.isNotEmpty ? performances : [],
+      guardian: json['guardians'] != null
+          ? ParentModel.fromJson(json['guardians'])
+          : null, // Parse guardian
     );
   }
 
@@ -49,7 +56,8 @@ class ChildModel {
     return ChildModel(
       childId: json['id'] as int?,
       childName: json['child_name'] as String? ?? '',
-      childMykidNumber: '', // Assuming this is not provided in the attendance JSON
+      childMykidNumber:
+          '', // Assuming this is not provided in the attendance JSON
       childDOB: json['child_dob'] as String? ?? '',
       childGender: json['child_gender'] as String? ?? '',
       childAllergies: json['child_allergy'] as String? ?? '',

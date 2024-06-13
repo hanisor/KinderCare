@@ -1,4 +1,5 @@
 import 'child_model.dart';
+import 'parent_model.dart';
 
 class BehaviourModel {
   int? id;

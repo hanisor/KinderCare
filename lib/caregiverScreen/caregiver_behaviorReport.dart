@@ -16,7 +16,7 @@ class CaregiverBehaviourReport extends StatefulWidget {
 
 class _CaregiverBehaviourReportState extends State<CaregiverBehaviourReport> {
   List<BehaviourModel> behaviourList = [];
-  Map<String, Map<int, List<BehaviourModel>>> groupedBehaviourMap = {};
+  Map<String, Map<String, Map<int, List<BehaviourModel>>>> groupedBehaviourMap = {};
 
   @override
   void initState() {
@@ -52,6 +52,7 @@ class _CaregiverBehaviourReportState extends State<CaregiverBehaviourReport> {
 
                 String date = DateFormat('yyyy-MM-dd')
                     .format(DateTime.parse(behaviourModel.dateTime));
+                String month = DateFormat('yyyy-MM').format(DateTime.parse(behaviourModel.dateTime));
                 final dateOfBirthString = child['date_of_birth'];
                 if (dateOfBirthString != null) {
                   try {
@@ -62,13 +63,16 @@ class _CaregiverBehaviourReportState extends State<CaregiverBehaviourReport> {
                         dob.year -
                         (now.month >= dob.month && now.day >= dob.day ? 0 : 1);
 
-                    if (groupedBehaviourMap[date] == null) {
-                      groupedBehaviourMap[date] = {};
+                    if (groupedBehaviourMap[month] == null) {
+                      groupedBehaviourMap[month] = {};
                     }
-                    if (groupedBehaviourMap[date]![age] == null) {
-                      groupedBehaviourMap[date]![age] = [];
+                    if (groupedBehaviourMap[month]![date] == null) {
+                      groupedBehaviourMap[month]![date] = {};
                     }
-                    groupedBehaviourMap[date]![age]!.add(behaviourModel);
+                    if (groupedBehaviourMap[month]![date]![age] == null) {
+                      groupedBehaviourMap[month]![date]![age] = [];
+                    }
+                    groupedBehaviourMap[month]![date]![age]!.add(behaviourModel);
                   } catch (_) {
                     try {
                       final dob =
@@ -80,13 +84,16 @@ class _CaregiverBehaviourReportState extends State<CaregiverBehaviourReport> {
                               ? 0
                               : 1);
 
-                      if (groupedBehaviourMap[date] == null) {
-                        groupedBehaviourMap[date] = {};
+                      if (groupedBehaviourMap[month] == null) {
+                        groupedBehaviourMap[month] = {};
                       }
-                      if (groupedBehaviourMap[date]![age] == null) {
-                        groupedBehaviourMap[date]![age] = [];
+                      if (groupedBehaviourMap[month]![date] == null) {
+                        groupedBehaviourMap[month]![date] = {};
                       }
-                      groupedBehaviourMap[date]![age]!.add(behaviourModel);
+                      if (groupedBehaviourMap[month]![date]![age] == null) {
+                        groupedBehaviourMap[month]![date]![age] = [];
+                      }
+                      groupedBehaviourMap[month]![date]![age]!.add(behaviourModel);
                     } catch (error) {
                       print('Invalid date of birth format: $dateOfBirthString');
                     }
@@ -131,9 +138,9 @@ class _CaregiverBehaviourReportState extends State<CaregiverBehaviourReport> {
       body: ListView.builder(
         itemCount: groupedBehaviourMap.length,
         itemBuilder: (BuildContext context, int index) {
-          String date = groupedBehaviourMap.keys.elementAt(index);
-          Map<int, List<BehaviourModel>> ageGroupMap =
-              groupedBehaviourMap[date]!;
+          String month = groupedBehaviourMap.keys.elementAt(index);
+          Map<String, Map<int, List<BehaviourModel>>> dayGroupMap =
+              groupedBehaviourMap[month]!;
           return Padding(
             padding: const EdgeInsets.all(8.0),
             child: Card(
@@ -143,50 +150,75 @@ class _CaregiverBehaviourReportState extends State<CaregiverBehaviourReport> {
               ),
               child: ExpansionTile(
                 title: Text(
-                  date,
+                  DateFormat('MMMM yyyy').format(DateTime.parse(month + '-01')),
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                children: ageGroupMap.entries.map((entry) {
-                  int age = entry.key;
-                  List<BehaviourModel> behaviours = entry.value;
+                children: dayGroupMap.entries.map((dayEntry) {
+                  String date = dayEntry.key;
+                  Map<int, List<BehaviourModel>> ageGroupMap = dayEntry.value;
                   return Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Card(
-                      color: Colors.blue[50],
+                      color: Colors.green[50],
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(15.0),
                       ),
                       child: ExpansionTile(
                         title: Text(
-                          'Age: $age',
+                          date,
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        children: behaviours.map((behaviour) {
-                          return ListTile(
-                            title: Text(
-                              behaviour.childName ?? 'Unknown Child',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Behaviour: ${behaviour.type}',
-                                  style: TextStyle(fontWeight: FontWeight.bold),
+                        children: ageGroupMap.entries.map((entry) {
+                          int age = entry.key;
+                          List<BehaviourModel> behaviours = entry.value;
+                          return Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Card(
+                              color: Colors.blue[50],
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(15.0),
+                              ),
+                              child: ExpansionTile(
+                                title: Text(
+                                  'Age: $age',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                                Text(
-                                  'Description: ${behaviour.description}',
-                                  style: TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                                Text(
-                                  'Time: ${DateFormat('HH:mm').format(DateTime.parse(behaviour.dateTime))}',
-                                  style: TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                              ],
+                                children: behaviours.map((behaviour) {
+                                  return ListTile(
+                                    title: Text(
+                                      behaviour.childName ?? 'Unknown Child',
+                                      style: TextStyle(fontWeight: FontWeight.bold),
+                                    ),
+                                    subtitle: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Parent Name: ${behaviour.childModel?.guardian?.parentName ?? 'Unknown Parent'}', // Display parentModel name
+                                          style: TextStyle(fontWeight: FontWeight.bold),
+                                        ),
+                                        Text(
+                                          'Behaviour: ${behaviour.type}',
+                                          style: TextStyle(fontWeight: FontWeight.bold),
+                                        ),
+                                        Text(
+                                          'Description: ${behaviour.description}',
+                                          style: TextStyle(fontWeight: FontWeight.bold),
+                                        ),
+                                        Text(
+                                          'Time: ${DateFormat('HH:mm').format(DateTime.parse(behaviour.dateTime))}',
+                                          style: TextStyle(fontWeight: FontWeight.bold),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
                             ),
                           );
                         }).toList(),
