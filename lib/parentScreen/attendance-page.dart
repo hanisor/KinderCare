@@ -136,7 +136,6 @@ class _AttendancePageState extends State<AttendancePage> {
               attendanceStatus = attendance;
             } else if (attendance is List) {
               // Assuming there's only one attendance record per day
-              var childAttendance = attendance[0];
               attendanceStatus = 'Present';
             }
 

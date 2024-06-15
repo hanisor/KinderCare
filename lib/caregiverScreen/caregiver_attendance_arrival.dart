@@ -19,26 +19,29 @@ class CaregiverAttendanceArrival extends StatefulWidget {
 class _CaregiverAttendanceArrivalState
     extends State<CaregiverAttendanceArrival> {
   List<ChildModel> childrenList = [];
-  Set<int> recordedAttendanceChildren = {}; // Track children with recorded attendance
+  Set<int> recordedAttendanceChildren =
+      {}; // Track children with recorded attendance
+  int? groupId; // Track the groupId fetched from server
 
   @override
   void initState() {
     super.initState();
     if (widget.caregiverId != null) {
-      getChildrenData();
+      fetchGroupId(widget.caregiverId!);
     }
   }
 
-  Future<void> getChildrenData() async {
+  Future<void> getChildrenData(int groupId) async {
     try {
-      RequestController req = RequestController(
-          path: 'child-group/caregiverId/${widget.caregiverId}');
+      RequestController req =
+          RequestController(path: 'child-group/caregiverId/$groupId');
+      print("caregiverid: $groupId");
       await req.get();
       var response = req.result();
 
-      if (response != null && response.containsKey('child_group')) {
+      if (response != null && response.containsKey('group')) {
         setState(() {
-          var childrenData = response['child_group'];
+          var childrenData = response['group'];
           if (childrenData is List) {
             childrenList = List<ChildModel>.from(childrenData.map((x) {
               print('Processing child data: $x'); // Debug print
@@ -62,7 +65,7 @@ class _CaregiverAttendanceArrivalState
     }
   }
 
-  Future<void> fetchGroupId(int caregiverId, int? childId) async {
+  Future<void> fetchGroupId(int caregiverId) async {
     try {
       RequestController req = RequestController(path: 'get-group');
       req.setBody({'caregiver_id': caregiverId});
@@ -70,15 +73,15 @@ class _CaregiverAttendanceArrivalState
       var response = req.result();
 
       if (response != null && response.containsKey('group_id')) {
-        int groupId = response['group_id'];
-        fetchChildGroupId(childId, groupId); // Pass the correct child ID
+        groupId = response['group_id'];
+        getChildrenData(groupId!); // Fetch children data with group ID
       }
     } catch (e) {
       print("Error fetching group ID: $e");
     }
   }
 
-  Future<void> fetchChildGroupId(int? childId, int groupId) async {
+  Future<void> fetchChildGroupId(int childId, int groupId) async {
     try {
       print('child_id: $childId, group_id: $groupId');
       RequestController req = RequestController(path: 'get-child-group-id');
@@ -92,12 +95,38 @@ class _CaregiverAttendanceArrivalState
           print("Error fetching child group ID: ${response['message']}");
         } else if (response.containsKey('child_group_id')) {
           int childGroupId = response['child_group_id'];
-          recordAttendance(childGroupId);
+          showConfirmationDialog(childGroupId); // Show confirmation dialog
         }
       }
     } catch (e) {
       print("Error fetching child group ID: $e");
     }
+  }
+
+  Future<void> showConfirmationDialog(int childGroupId) async {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirm Attendance'),
+        content:
+            const Text('Do you want to record the attendance for this child?'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context); // Close the dialog
+            },
+            child: const Text('No'),
+          ),
+          TextButton(
+            onPressed: () {
+              recordAttendance(childGroupId);
+              Navigator.pop(context); // Close the dialog
+            },
+            child: const Text('Yes'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> recordAttendance(int childGroupId) async {
@@ -119,6 +148,10 @@ class _CaregiverAttendanceArrivalState
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(responseBody['message'])),
           );
+          setState(() {
+            recordedAttendanceChildren.add(childGroupId);
+            childrenList.removeWhere((child) => child.childId == childGroupId);
+          });
         }
       } else if (response.statusCode == 422) {
         showDialog(
@@ -138,7 +171,8 @@ class _CaregiverAttendanceArrivalState
                 onPressed: () {
                   setState(() {
                     recordedAttendanceChildren.add(childGroupId);
-                    childrenList.removeWhere((child) => child.childId == childGroupId);
+                    childrenList
+                        .removeWhere((child) => child.childId == childGroupId);
                   });
                   Navigator.pop(context); // Close the dialog
                 },
@@ -150,7 +184,8 @@ class _CaregiverAttendanceArrivalState
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('Error recording attendance: ${response.statusCode}')),
+              content:
+                  Text('Error recording attendance: ${response.statusCode}')),
         );
       }
     } catch (e) {
@@ -182,7 +217,8 @@ class _CaregiverAttendanceArrivalState
           // Filter the childrenList to include only those which are not recorded and are unique
           final filteredChildrenList = attendanceModel.selectedChildren
               .where((child) =>
-                  childrenList.any((fetchedChild) => fetchedChild.childId == child.childId) &&
+                  childrenList.any((fetchedChild) =>
+                      fetchedChild.childId == child.childId) &&
                   !recordedAttendanceChildren.contains(child.childId))
               .toSet()
               .toList();
@@ -204,8 +240,10 @@ class _CaregiverAttendanceArrivalState
                     return Card(
                       child: ListTile(
                         onTap: () {
-                          if (widget.caregiverId != null) {
-                            fetchGroupId(widget.caregiverId!, child.childId); // Pass the correct child ID
+                          if (groupId != null) {
+                            print(
+                                "fetchChildGroupId(child.childId!, groupId!); ${child.childId}, $groupId ");
+                            fetchChildGroupId(child.childId!, groupId!);
                           }
                         },
                         leading: CircleAvatar(

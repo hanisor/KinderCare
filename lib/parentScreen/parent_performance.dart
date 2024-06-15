@@ -122,6 +122,21 @@ class _ParentPerformanceState extends State<ParentPerformance> {
     return groupedData;
   }
 
+  int _calculateAge(String dob) {
+    DateTime birthDate;
+    try {
+      birthDate = DateFormat('MM/dd/yyyy').parse(dob);
+    } catch (e) {
+      throw FormatException("Invalid date format");
+    }
+    DateTime today = DateTime.now();
+    int age = today.year - birthDate.year;
+    if (today.month < birthDate.month || (today.month == birthDate.month && today.day < birthDate.day)) {
+      age--;
+    }
+    return age;
+  }
+
   @override
   Widget build(BuildContext context) {
     Map<String, Map<String, List<PerformanceModel>>> groupedData =
@@ -156,9 +171,23 @@ class _ParentPerformanceState extends State<ParentPerformance> {
                         children: childrenPerformances.keys.map((childName) {
                           List<PerformanceModel> performances =
                               childrenPerformances[childName]!;
+                          ChildModel child;
+                          try {
+                            child = childrenList.firstWhere((child) => child.childName == childName);
+                          } catch (e) {
+                            print("Child not found for name: $childName");
+                            return Container();
+                          }
+                          int childAge;
+                          try {
+                            childAge = _calculateAge(child.childDOB);
+                          } catch (e) {
+                            print("Invalid child DOB format: ${child.childDOB}");
+                            return Container();
+                          }
                           return ExpansionTile(
                             title: Text(
-                              childName,
+                              '$childName (Age: $childAge)',
                               style: const TextStyle(fontWeight: FontWeight.bold),
                             ),
                             children: performances.isNotEmpty
@@ -173,7 +202,6 @@ class _ParentPerformanceState extends State<ParentPerformance> {
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
-                                          
                                           Row(
                                             children: [
                                               for (int i = 0; i < 3; i++)
