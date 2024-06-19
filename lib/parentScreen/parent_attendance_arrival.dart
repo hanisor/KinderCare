@@ -6,10 +6,11 @@ import 'package:kindercare/request_controller.dart';
 
 class ParentAttendanceArrival extends StatefulWidget {
   final int? parentId;
-  ParentAttendanceArrival({Key? key, this.parentId}) : super(key: key);
+  const ParentAttendanceArrival({Key? key, this.parentId}) : super(key: key);
 
   @override
-  State<ParentAttendanceArrival> createState() => _ParentAttendanceArrivalState();
+  State<ParentAttendanceArrival> createState() =>
+      _ParentAttendanceArrivalState();
 }
 
 class _ParentAttendanceArrivalState extends State<ParentAttendanceArrival> {
@@ -36,17 +37,7 @@ class _ParentAttendanceArrivalState extends State<ParentAttendanceArrival> {
         print("Children Data: $childrenData"); // Debugging line
         if (childrenData is List) {
           childrenList =
-              List<ChildModel>.from(childrenData.map((x) => ChildModel(
-                    childId: int.tryParse(x['id'].toString()),
-                    childName: x['name'] as String,
-                    childDOB: x['date_of_birth'] as String,
-                    childGender: x['gender'] as String,
-                    childMykidNumber: x['my_kid_number'] as String,
-                    childAllergies: x['allergy'] as String,
-                    childStatus: x['status'] as String,
-                    parentId: widget.parentId,
-                    performances: [],
-                  )));
+              childrenData.map((x) => ChildModel.fromJson(x)).toList();
         } else {
           print("Invalid children data format"); // Debugging line
         }
@@ -57,70 +48,76 @@ class _ParentAttendanceArrivalState extends State<ParentAttendanceArrival> {
     print("childrenList : $childrenList");
   }
 
-void toggleChildSelection(ChildModel child, AttendanceModel attendanceModel) {
-  if (attendanceModel.selectedChildren.contains(child)) {
-    attendanceModel.removeChild(child);
-  } else {
-    attendanceModel.addChild(child);
+  void toggleChildSelection(ChildModel child, AttendanceModel attendanceModel) {
+    if (attendanceModel.selectedChildren.contains(child)) {
+      attendanceModel.removeChild(child);
+    } else {
+      attendanceModel.addChild(child);
+    }
   }
-}
 
-
- void sendAttendanceConfirmation(BuildContext context, AttendanceModel attendanceModel, DateTime dateTime) {
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: const Text("Confirm Selected Children"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text("Are you sure you want to send attendance for the following children?"),
-            const SizedBox(height: 16),
-            ListView.builder(
-              shrinkWrap: true,
-              itemCount: attendanceModel.selectedChildren.length,
-              itemBuilder: (context, index) {
-                return Text(attendanceModel.selectedChildren[index].childName);
+  void sendAttendanceConfirmation(BuildContext context,
+      AttendanceModel attendanceModel, DateTime dateTime) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Confirm Selected Children"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                  "Are you sure you want to send attendance for the following children?"),
+              const SizedBox(height: 16),
+              ListView.builder(
+                shrinkWrap: true,
+                itemCount: attendanceModel.selectedChildren.length,
+                itemBuilder: (context, index) {
+                  return Text(
+                      attendanceModel.selectedChildren[index].childName);
+                },
+              ),
+              const SizedBox(height: 16),
+              Text(
+                  "Date: ${dateTime.day}/${dateTime.month}/${dateTime.year}  Time: ${dateTime.hour}:${dateTime.minute}"),
+            ],
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
               },
+              child: const Text('Cancel'),
             ),
-            const SizedBox(height: 16),
-            Text("Date: ${dateTime.day}/${dateTime.month}/${dateTime.year}  Time: ${dateTime.hour}:${dateTime.minute}"),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                // Create a copy of selectedChildren
+                final List<ChildModel> selectedChildrenCopy =
+                    List.from(attendanceModel.selectedChildren);
+                // Update selectedDateTime in AttendanceModel
+                attendanceModel.selectedDateTime = dateTime;
+                // Pass date and time along with children details to the model
+                attendanceModel.addChildWithDateTime(
+                    selectedChildrenCopy, dateTime);
+                // Show SnackBar message
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content:
+                        Text('Attendance for your children has been sent!'),
+                    duration:
+                        Duration(seconds: 2), // Adjust the duration as needed
+                  ),
+                );
+              },
+              child: const Text('Yes'),
+            ),
           ],
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              // Create a copy of selectedChildren
-              final List<ChildModel> selectedChildrenCopy = List.from(attendanceModel.selectedChildren);
-              // Update selectedDateTime in AttendanceModel
-              attendanceModel.selectedDateTime = dateTime;
-              // Pass date and time along with children details to the model
-              attendanceModel.addChildWithDateTime(selectedChildrenCopy, dateTime);
-              // Show SnackBar message
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Attendance for your children has been sent!'),
-                  duration: Duration(seconds: 2), // Adjust the duration as needed
-                ),
-              );
-            },
-            child: const Text('Yes'),
-          ),
-        ],
-      );
-    },
-  );
-}
-
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -128,7 +125,7 @@ void toggleChildSelection(ChildModel child, AttendanceModel attendanceModel) {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Attendance"),
+        title: const Text("Attendance Arrival"),
         actions: [
           IconButton(
             onPressed: attendanceModel.selectedChildren.isNotEmpty
@@ -166,7 +163,7 @@ void toggleChildSelection(ChildModel child, AttendanceModel attendanceModel) {
                         final isSelected =
                             attendanceModel.selectedChildren.contains(child);
                         return GestureDetector(
-                          onTap: () {
+                          onLongPress: () {
                             setState(() {
                               toggleChildSelection(child, attendanceModel);
                             });
@@ -180,8 +177,35 @@ void toggleChildSelection(ChildModel child, AttendanceModel attendanceModel) {
                                   child: Text(child.childName[0]),
                                 ),
                                 title: Text(child.childName),
-                                subtitle: Text(
-                                    'DOB: ${child.childDOB}\nGender: ${child.childGender}\nAllergies: ${child.childAllergies}'),
+                                subtitle: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text('DOB: ${child.childDOB}'),
+                                    Text('Gender: ${child.childGender}'),
+                                    Text(
+                                        'Allergies: ${child.childAllergies}'),
+                                    RichText(
+                                      text: TextSpan(
+                                        text: 'Caregiver: ',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.black,
+                                        ),
+                                        children: <TextSpan>[
+                                          TextSpan(
+                                            text:
+                                                '${child.caregiverName ?? ""}',
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              color:
+                                                  Color.fromARGB(255, 0, 85, 255), // Example color
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ), // Display caregiver name
+                                  ],
+                                ),
                                 trailing: Icon(
                                   isSelected
                                       ? Icons.check_circle

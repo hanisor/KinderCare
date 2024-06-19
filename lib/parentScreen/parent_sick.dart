@@ -1,10 +1,9 @@
 import 'package:datetime_picker_formfield_new/datetime_picker_formfield.dart';
 import 'package:flutter/material.dart';
-import 'package:kindercare/model/child_model.dart';
 import 'package:intl/intl.dart';
+import 'package:kindercare/model/child_model.dart';
 import 'package:kindercare/request_controller.dart';
 import '../model/sickness_model.dart';
-
 
 class ParentSickness extends StatefulWidget {
   final int? parentId;
@@ -35,17 +34,19 @@ class _ParentSicknessState extends State<ParentSickness> {
         var childrenData = response['children'];
         print("Children Data: $childrenData"); // Debugging line
         if (childrenData is List) {
-          childrenList = List<ChildModel>.from(childrenData.map((x) => ChildModel(
-                childId: int.tryParse(x['id'].toString()),
-                childName: x['name'] as String,
-                childDOB: x['date_of_birth'] as String,
-                childGender: x['gender'] as String,
-                childMykidNumber: x['my_kid_number'] as String,
-                childAllergies: x['allergy'] as String,
-                childStatus:  x['status'] as String,
-                parentId: widget.parentId, 
-                performances: [],
-              )));
+          childrenList =
+              List<ChildModel>.from(childrenData.map((x) => ChildModel(
+                    childId: int.tryParse(x['id'].toString()),
+                    childName: x['name'] as String,
+                    childDOB: x['date_of_birth'] as String,
+                    childGender: x['gender'] as String,
+                    childMykidNumber: x['my_kid_number'] as String,
+                    childAllergies: x['allergy'] as String,
+                    childStatus: x['status'] as String,
+                    parentId: widget.parentId,
+                    performances: [],
+                    caregiverName: x['caregiver_name'] as String?,
+                  )));
           // Set selectedChild if the list is not empty
           if (childrenList.isNotEmpty) {
             selectedChild = childrenList[0];
@@ -60,51 +61,55 @@ class _ParentSicknessState extends State<ParentSickness> {
     print("childrenList : $childrenList");
   }
 
-
-    Future<void> _saveChecklistItem() async {
-      try {
-        if (sicknessType == null ||
-            dosage == null ||
-            dateTime == null ||
-            selectedChild == null) {
-          return;
-        }
-
-        String formattedDateTime =
-            DateFormat("yyyy-MM-dd HH:mm:ss").format(dateTime!);
-
-        RequestController req = RequestController(path: 'add-sickness');
-
-        req.setBody({
-          "type": sicknessType!,
-          "dosage": dosage!,
-          "date_time": formattedDateTime,
-          "status": sicknessStatus, // Handle null status
-          "child_id": selectedChild!.childId.toString(),
-        });
-
-        var response = await req.post();
-
-        if (response.statusCode == 200) {
-          var result = req.result();
-
-          if (result != null && result.containsKey('sickness')) {
-            print('Checklist item saved successfully');
-            fetchChecklistItems();
-          } else {
-            print('Error saving checklist item');
-          }
-        } else {
-          print('Error: HTTP request failed with status code ${response.statusCode}');
-        }
-      } catch (e) {
-        print('Error: $e');
+  Future<void> _saveChecklistItem() async {
+    try {
+      if (sicknessType == null ||
+          dosage == null ||
+          dateTime == null ||
+          selectedChild == null) {
+        return;
       }
+
+      String formattedDateTime =
+          DateFormat("yyyy-MM-dd HH:mm:ss").format(dateTime!);
+
+      RequestController req = RequestController(path: 'add-sickness');
+
+      req.setBody({
+        "type": sicknessType!,
+        "dosage": dosage!,
+        "date_time": formattedDateTime,
+        "status": sicknessStatus, // Handle null status
+        "child_id": selectedChild!.childId.toString(),
+      });
+
+      var response = await req.post();
+
+      if (response.statusCode == 200) {
+        var result = req.result();
+
+        if (result != null && result.containsKey('sickness')) {
+          print('Checklist item saved successfully');
+          fetchChecklistItems();
+        } else {
+          print('Error saving checklist item');
+        }
+      } else {
+        print(
+            'Error: HTTP request failed with status code ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error: $e');
     }
+  }
 
   Future<void> fetchChecklistItems() async {
-    RequestController req = RequestController(path: 'sickness/by-childId/${selectedChild!.childId}');
-    print("selectedChild!.childId : ${selectedChild!.childId}"); // Print the response to see its type
+    if (selectedChild == null) return;
+
+    RequestController req = RequestController(
+        path: 'sickness/by-childId/${selectedChild!.childId}');
+    print(
+        "selectedChild!.childId : ${selectedChild!.childId}"); // Print the response to see its type
 
     await req.get();
     var response = req.result();
@@ -112,13 +117,14 @@ class _ParentSicknessState extends State<ParentSickness> {
     if (response != null && response.containsKey('sicknesses')) {
       // Process the response data here
       var sicknessData = response['sicknesses'];
-      print("sickness Data: $sicknessData"); // Print children data for debugging
+      print(
+          "sickness Data: $sicknessData"); // Print children data for debugging
       setState(() {
         checklistItems = List<SicknessModel>.from(sicknessData.map((x) {
           // Ensure sicknessId is parsed as an integer
           x['id'] = int.tryParse(x['id'].toString());
           print("SicknessId: ${x['id']}"); // Debug sicknessId
-          print(" sicknessType: ${x['type']}"); // Debug sicknessType
+          print("sicknessType: ${x['type']}"); // Debug sicknessType
           return SicknessModel.fromJson(x);
         }));
 
@@ -126,7 +132,8 @@ class _ParentSicknessState extends State<ParentSickness> {
         checklistItems.sort((a, b) {
           if (a.sicknessStatus == 'Pending' && b.sicknessStatus != 'Taken') {
             return 1;
-          } else if (a.sicknessStatus != 'Pending' && b.sicknessStatus == 'Taken') {
+          } else if (a.sicknessStatus != 'Pending' &&
+              b.sicknessStatus == 'Taken') {
             return -1;
           } else {
             return 0;
@@ -136,11 +143,7 @@ class _ParentSicknessState extends State<ParentSickness> {
     }
   }
 
-   
-
-  
   Future<void> _refreshData() async {
-    //await getChildrenData();
     await fetchChecklistItems();
   }
 
@@ -148,7 +151,6 @@ class _ParentSicknessState extends State<ParentSickness> {
   void initState() {
     super.initState();
     getChildrenData();
-    fetchChecklistItems(); // Fetch checklist items when the widget initializes
   }
 
   @override
@@ -234,6 +236,15 @@ class _ParentSicknessState extends State<ParentSickness> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
+                    const SizedBox(height: 8),
+                    Text(
+                      "Sent to: Caregiver ${selectedChild!.caregiverName ?? 'N/A'}",
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.pinkAccent, // Change the color here
+                      ),
+                    ),
                   ],
                 ),
               const SizedBox(height: 20),
@@ -254,8 +265,6 @@ class _ParentSicknessState extends State<ParentSickness> {
                   },
                 ),
               ),
-
-
             ],
           ),
         ),

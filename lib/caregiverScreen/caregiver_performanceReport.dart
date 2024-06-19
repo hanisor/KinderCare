@@ -119,15 +119,21 @@ class _CaregiverPerformanceReportState
     }
   }
 
-  int _calculateAge(String dobString) {
-    final dob = DateFormat('dd/MM/yyyy').parse(dobString);
-    final now = DateTime.now();
-    int age = now.year - dob.year;
-    if (now.month < dob.month ||
-        (now.month == dob.month && now.day < dob.day)) {
-      age--;
+  // Function to calculate age from date of birth
+  int _calculateAge(String dateOfBirth) {
+    try {
+      DateTime dob = DateFormat("yyyy-MM-dd").parse(dateOfBirth);
+      DateTime today = DateTime.now();
+      int age = today.year - dob.year;
+      if (today.month < dob.month ||
+          (today.month == dob.month && today.day < dob.day)) {
+        age--;
+      }
+      return age;
+    } catch (e) {
+      print("Error parsing date of birth: $e");
+      return -1; // Return a negative value to indicate an error
     }
-    return age;
   }
 
   @override

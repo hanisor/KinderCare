@@ -3,7 +3,7 @@ import 'package:kindercare/caregiverScreen/caregiver_performanceReport.dart';
 import 'package:kindercare/model/child_model.dart';
 import 'package:kindercare/model/performance_model.dart';
 import 'package:kindercare/request_controller.dart';
-import 'package:intl/intl.dart'; // Add this import
+import 'package:intl/intl.dart';
 
 class CaregiverPerformance extends StatefulWidget {
   final int? caregiverId;
@@ -59,22 +59,28 @@ class _CaregiverPerformanceState extends State<CaregiverPerformance> {
 
   DateTime? parseDate(String dateString) {
     try {
-      return DateFormat('MM/dd/yyyy').parse(dateString);
+      return DateFormat('yyyy-MM-dd').parse(dateString);
     } catch (e) {
       print("Invalid date format: $dateString");
       return null;
     }
   }
 
-  // Method to calculate age from date of birth
-  int calculateAge(DateTime dob) {
-    DateTime now = DateTime.now();
-    int age = now.year - dob.year;
-    if (now.month < dob.month ||
-        (now.month == dob.month && now.day < dob.day)) {
-      age--;
+  // Function to calculate age from date of birth
+  int _calculateAge(String dateOfBirth) {
+    try {
+      DateTime dob = DateFormat("yyyy-MM-dd").parse(dateOfBirth);
+      DateTime today = DateTime.now();
+      int age = today.year - dob.year;
+      if (today.month < dob.month ||
+          (today.month == dob.month && today.day < dob.day)) {
+        age--;
+      }
+      return age;
+    } catch (e) {
+      print("Error parsing date of birth: $e");
+      return -1; // Return a negative value to indicate an error
     }
-    return age;
   }
 
   Future<void> getChildrenData() async {
@@ -87,9 +93,9 @@ class _CaregiverPerformanceState extends State<CaregiverPerformance> {
       var response = req.result();
       print("Request result: $response"); // Print the response to see its type
 
-      if (response != null && response.containsKey('child_group')) {
+      if (response != null && response.containsKey('group')) {
         setState(() {
-          var childrenData = response['child_group'];
+          var childrenData = response['group'];
           print("Children Data: $childrenData"); // Debugging line
 
           if (childrenData is List) {
@@ -117,7 +123,7 @@ class _CaregiverPerformanceState extends State<CaregiverPerformance> {
               try {
                 DateTime? dob = parseDate(child.childDOB);
                 if (dob != null) {
-                  int age = calculateAge(dob); // Calculate age here
+                  int age = _calculateAge(child.childDOB); // Calculate age here
                   if (!childrenByAge.containsKey(age)) {
                     childrenByAge[age] = [];
                   }
@@ -199,12 +205,16 @@ class _CaregiverPerformanceState extends State<CaregiverPerformance> {
     print('Selected child: ${selectedChild!.childName}');
     print('Selected child DOB: ${selectedChild!.childDOB}');
 
-    final age = calculateAge(parseDate(selectedChild!.childDOB)!);
+    final age = _calculateAge(selectedChild!.childDOB);
+    if (age == -1) {
+      return Text('Invalid date of birth.');
+    }
+
     print('Calculated age: $age');
 
     final selectedSkills = skillsByAge[age];
     if (selectedSkills == null) {
-      print('No skills found for $age.');
+      print('No skills found for age $age.');
       return SizedBox.shrink();
     }
 
@@ -289,7 +299,7 @@ class _CaregiverPerformanceState extends State<CaregiverPerformance> {
                     Icons.star,
                     color: skillLevels[skill] != null &&
                             skillLevels[skill]! >= index + 1
-                        ?  Colors.amber
+                        ? Colors.amber
                         : Colors.grey,
                   ),
                 );

@@ -82,26 +82,33 @@ class _CaregiverAttendanceArrivalState
   }
 
   Future<void> fetchChildGroupId(int childId, int groupId) async {
-    try {
-      print('child_id: $childId, group_id: $groupId');
-      RequestController req = RequestController(path: 'get-child-group-id');
-      req.setBody({'child_id': childId, 'group_id': groupId});
-      await req.post();
+  try {
+    print('Fetching child group ID: child_id = $childId, group_id = $groupId');
+    RequestController req = RequestController(path: 'get-child-group-id');
+    req.setBody({'child_id': childId, 'group_id': groupId});
+    await req.post();
 
-      var response = req.result();
+    var response = req.result();
 
-      if (response != null) {
-        if (response.containsKey('message')) {
-          print("Error fetching child group ID: ${response['message']}");
-        } else if (response.containsKey('child_group_id')) {
-          int childGroupId = response['child_group_id'];
-          showConfirmationDialog(childGroupId); // Show confirmation dialog
-        }
+    if (response != null) {
+      if (response.containsKey('message')) {
+        print("Error fetching child group ID: ${response['message']}");
+      } else if (response.containsKey('child_group_id')) {
+        int childGroupId = response['child_group_id'];
+        print('Fetched child group ID: $childGroupId');
+        showConfirmationDialog(childGroupId); // Show confirmation dialog
+      } else {
+        print("Unexpected response format: $response");
       }
-    } catch (e) {
-      print("Error fetching child group ID: $e");
+    } else {
+      print("No response from the server");
     }
+  } catch (e, stackTrace) {
+    print("Error fetching child group ID: $e");
+    print(stackTrace);
   }
+}
+
 
   Future<void> showConfirmationDialog(int childGroupId) async {
     showDialog(
@@ -239,11 +246,14 @@ class _CaregiverAttendanceArrivalState
                     final child = filteredChildrenList[index];
                     return Card(
                       child: ListTile(
-                        onTap: () {
-                          if (groupId != null) {
+                        onLongPress: () {
+                          if (groupId != null && child.childId != null) {
                             print(
-                                "fetchChildGroupId(child.childId!, groupId!); ${child.childId}, $groupId ");
+                                "fetchChildGroupId(child.childId!, groupId!); ${child.childId}, $groupId");
                             fetchChildGroupId(child.childId!, groupId!);
+                          } else {
+                            print(
+                                "groupId or childId is null: groupId = $groupId, childId = ${child.childId}");
                           }
                         },
                         leading: CircleAvatar(

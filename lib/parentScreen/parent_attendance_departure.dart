@@ -147,7 +147,7 @@ class _ParentAttendanceDepartureState extends State<ParentAttendanceDeparture> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Confirm Attendance"),
+        title: const Text("Attendance Departure"),
       ),
       body: Consumer<AttendanceModel>(
         builder: (context, attendanceModel, child) {
@@ -160,7 +160,7 @@ class _ParentAttendanceDepartureState extends State<ParentAttendanceDeparture> {
               const Padding(
                 padding: EdgeInsets.all(16.0),
                 child: Text(
-                  "Confirm the attendance for the following children:",
+                  "Confirm the time departure for the following children:",
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
@@ -173,7 +173,7 @@ class _ParentAttendanceDepartureState extends State<ParentAttendanceDeparture> {
                     if (!recordedAttendanceChildren.contains(child.childId)) {
                       return Card(
                         child: ListTile(
-                          onTap: () => confirmAttendance(child, attendanceModel),
+                          onLongPress: () => confirmAttendance(child, attendanceModel),
                           leading: CircleAvatar(
                             child: Text(child.childName[0]),
                           ),

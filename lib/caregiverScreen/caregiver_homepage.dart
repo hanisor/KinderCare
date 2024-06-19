@@ -684,11 +684,12 @@ class _CaregiverHomepageState extends State<CaregiverHomepage> {
               leading: const Icon(Icons.file_copy),
               title: const Text('Report'),
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => CaregiverReport()),
-                );
-              },
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => CaregiverReport(caregiverId: caregiverId)),
+                      );
+                    },
             ),
             ListTile(
               leading: const Icon(Icons.logout),

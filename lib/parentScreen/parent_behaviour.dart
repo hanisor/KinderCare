@@ -119,19 +119,21 @@ class _ParentBehaviourState extends State<ParentBehaviour> {
     }
   }
 
-  int _calculateAge(String dob) {
-    DateTime birthDate;
+  // Function to calculate age from date of birth
+  int _calculateAge(String dateOfBirth) {
     try {
-      birthDate = DateFormat('MM/dd/yyyy').parse(dob);
+      DateTime dob = DateFormat("yyyy-MM-dd").parse(dateOfBirth);
+      DateTime today = DateTime.now();
+      int age = today.year - dob.year;
+      if (today.month < dob.month ||
+          (today.month == dob.month && today.day < dob.day)) {
+        age--;
+      }
+      return age;
     } catch (e) {
-      throw FormatException("Invalid date format");
+      print("Error parsing date of birth: $e");
+      return -1; // Return a negative value to indicate an error
     }
-    DateTime today = DateTime.now();
-    int age = today.year - birthDate.year;
-    if (today.month < birthDate.month || (today.month == birthDate.month && today.day < birthDate.day)) {
-      age--;
-    }
-    return age;
   }
 
   Future<void> _refreshData() async {

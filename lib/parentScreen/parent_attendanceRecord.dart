@@ -84,6 +84,8 @@ class _ParentAttendanceRecordState extends State<ParentAttendanceRecord> {
     }
   }
 
+    
+
   Future<void> fetchChildAttendance(int childGroupId, String childName) async {
     try {
       RequestController req = RequestController(path: 'attendance/child');

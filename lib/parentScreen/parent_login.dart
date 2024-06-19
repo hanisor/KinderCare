@@ -21,48 +21,61 @@ class _ParentLoginState extends State<ParentLogin> {
   bool _obscurePassword = true;
 
   Future<void> login() async {
-    var sharedPreferences = await SharedPreferences.getInstance();
-    String parentEmail = parentEmailEditingController.text.trim();
-    String parentPassword = parentPasswordEditingController.text.trim();
+  var sharedPreferences = await SharedPreferences.getInstance();
+  String parentEmail = parentEmailEditingController.text.trim();
+  String parentPassword = parentPasswordEditingController.text.trim();
 
-    RequestController req = RequestController(path: 'guardian-login');
+  RequestController req = RequestController(path: 'guardian-login');
 
-    req.setBody({
-      "email": parentEmail,
-      "password": parentPassword,
-    });
+  req.setBody({
+    "email": parentEmail,
+    "password": parentPassword,
+  });
 
-    await req.postNoToken();
+  await req.postNoToken();
 
-    var result = req.result();
-    print('result = $result');
-    if (result['token'] != null) {
-      String token = result['token'];
-      print('token = $token');
+  var result = req.result();
+  print('result = $result');
+  
+  if (result != null && result['token'] != null) {
+    String token = result['token'];
+    print('token = $token');
 
-      // store token in shared preferences
-      sharedPreferences.setString("token", token);
-      sharedPreferences.setString("email", parentEmail);
-      print('OneSignal.login = $parentEmail');
-      OneSignal.login(parentEmail);
+    // store token in shared preferences
+    sharedPreferences.setString("token", token);
+    sharedPreferences.setString("email", parentEmail);
+    print('OneSignal.login = $parentEmail');
+    OneSignal.login(parentEmail);
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => ParentHomepage()),
+    );
+  } else {
+    // Handle invalid login response
+    _showLoginErrorDialog();
+  }
+}
 
 
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => ParentHomepage()),
-      );  
-    } else {
-      // Handle invalid login response
-      Fluttertoast.showToast(
-        msg: "Login Failed. Please check your credentials.",
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.CENTER,
-        timeInSecForIosWeb: 1,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-        fontSize: 16.0,
-      );
-    }
+  void _showLoginErrorDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Login Failed"),
+          content: Text("Invalid email or password. Please try again."),
+          actions: <Widget>[
+            TextButton(
+              child: Text("OK"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override

@@ -1,5 +1,5 @@
 class CaregiverModel {
-  int? id;
+  int id;
   final String caregiverName;
   final String caregiverPhoneNumber;
   final String caregiverICNumber;
@@ -10,7 +10,7 @@ class CaregiverModel {
   final String caregiverRole;
 
   CaregiverModel({
-    this.id,
+    required this.id,
     required this.caregiverName,
     required this.caregiverPhoneNumber,
     required this.caregiverICNumber,
@@ -18,21 +18,20 @@ class CaregiverModel {
     required this.caregiverUsername,
     required this.caregiverPassword,
     required this.caregiverStatus,
-    required this.caregiverRole
+    required this.caregiverRole,
   });
 
-  // Factory constructor to create a ChildModel from JSON
   factory CaregiverModel.fromJson(Map<String, dynamic> json) {
     return CaregiverModel(
-      id: json['id'] as int,
-      caregiverName: json['name'] as String,
-      caregiverPhoneNumber: json['phone_number'] as String,
-      caregiverICNumber: json['ic_number'] as String,
-      caregiverEmail: json['email'] as String,
-      caregiverUsername: json['username'] as String,
-      caregiverPassword: json['password'] as String,
-      caregiverRole: json['role'] as String,
-      caregiverStatus: json['status'] as String,
+      id: json['id'] ?? 0,  // Default to 0 if 'id' is null
+      caregiverName: json['name'] ?? '',
+      caregiverPhoneNumber: json['phone_number'] ?? '',
+      caregiverICNumber: json['ic_number'] ?? '',
+      caregiverEmail: json['email'] ?? '',
+      caregiverUsername: json['username'] ?? '',
+      caregiverPassword: json['password'] ?? '',
+      caregiverRole: json['role'] ?? '',
+      caregiverStatus: json['status'] ?? '',
     );
   }
 }

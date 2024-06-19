@@ -1,102 +1,106 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:kindercare/request_controller.dart';
 
 class ForgotPassword extends StatefulWidget {
-
-const ForgotPassword({Key? key}) : super(key: key);
-
+  const ForgotPassword({Key? key}) : super(key: key);
 
   @override
   State<ForgotPassword> createState() => _ForgotPasswordState();
 }
 
 class _ForgotPasswordState extends State<ForgotPassword> {
+  final TextEditingController emailController = TextEditingController();
 
-  final forgotPasswordController = TextEditingController();
+  Future<void> sendPasswordResetEmail() async {
+    String email = emailController.text.trim();
+    
+    // Validate email format (optional)
+    if (!isValidEmail(email)) {
+      Fluttertoast.showToast(
+        msg: "Please enter a valid email address",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.CENTER,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+        fontSize: 16.0,
+      );
+      return;
+    }
+
+    RequestController req = RequestController(path: 'password-reset');
+
+    req.setBody({
+      "email": email,
+    });
+
+    try {
+      await req.postNoToken();
+      // Assuming successful request
+      Fluttertoast.showToast(
+        msg: "Password reset email sent. Please check your email.",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.CENTER,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.green,
+        textColor: Colors.white,
+        fontSize: 16.0,
+      );
+      Navigator.pop(context); // Navigate back to login or previous screen
+    } catch (e) {
+      print('Password reset error: $e');
+      Fluttertoast.showToast(
+        msg: "Failed to send password reset email. Please try again later.",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.CENTER,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+        fontSize: 16.0,
+      );
+    }
+  }
+
+  bool isValidEmail(String email) {
+    // Validate email format using RegExp or any other method you prefer
+    // Example validation for demonstration purposes
+    String emailPattern =
+        r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$';
+    RegExp regExp = RegExp(emailPattern);
+    return regExp.hasMatch(email);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.yellow[50],
       appBar: AppBar(
-          backgroundColor: (Colors.yellow[50])
+        title: const Text("Forgot Password"),
       ),
-      body: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(25.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const SizedBox(height: 50),
-
-              Text(
-              "FORGOT PASSWORD",
-              style: Theme.of(context).textTheme.headlineLarge,
+      body: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            TextField(
+              controller: emailController,
+              keyboardType: TextInputType.emailAddress,
+              decoration: InputDecoration(
+                labelText: 'Email',
+                hintText: 'Enter your email address',
+                border: OutlineInputBorder(),
+              ),
             ),
-              const SizedBox(height: 30),
-              Text(
-                "Hello there! Seems like you forgot your password.",
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 40),
-              Container(
-                height: 200,
-                width: 200,
-                // Uploading the Image from Assets
-                child:  Image.asset('assets/forgot password.png'),
-              ),
-              const SizedBox(height: 40),
-                Text(
-                  "Please enter your email address.",
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-                const SizedBox(height: 20),
-
-              Container(
-                alignment: Alignment.center,
-                margin: EdgeInsets.symmetric(horizontal: 30.0),
-                child: Column(
-                  children: [
-                    TextFormField(
-                      controller: forgotPasswordController,
-                      decoration: InputDecoration(
-                        labelText: "Email",
-                        prefixIcon: Icon(Icons.email),
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(
-                              width: 3, color: Colors.deepOrangeAccent),
-                          borderRadius: BorderRadius.circular(50.0),
-                      ),
-                    ),
-                    ),
-                    const SizedBox(height: 30),
-
-                    SizedBox(
-                      height: 40.0,
-                      child: ElevatedButton(
-                        style: ButtonStyle(
-                          foregroundColor: MaterialStateProperty.all(Colors.white),
-                          backgroundColor: MaterialStateProperty.all(
-                              Colors.orange[900]),
-                        ),
-                        onPressed: () async{
-
-                        },
-                        child: Text("Forgot"),
-                      ),
-                    ),
-                  ],
-                ),
-
-                ),
-
-              ],
-              ),
-          ),
-
-          ),
-
-
-      );
-    }
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                sendPasswordResetEmail();
+              },
+              child: const Text('Send Password Reset Email'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
+}

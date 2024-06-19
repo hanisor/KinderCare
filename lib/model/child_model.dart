@@ -13,6 +13,8 @@ class ChildModel {
   int? parentId;
   List<PerformanceModel> performances;
   ParentModel? guardian; // Add guardian field
+  final String? caregiverName; // Add this property
+
 
   ChildModel({
     this.childId,
@@ -25,6 +27,8 @@ class ChildModel {
     this.parentId,
     required this.performances,
     this.guardian,
+    this.caregiverName, // Initialize in constructor
+
   });
 
   factory ChildModel.fromJson(Map<String, dynamic> json) {
@@ -49,6 +53,8 @@ class ChildModel {
       guardian: json['guardians'] != null
           ? ParentModel.fromJson(json['guardians'])
           : null, // Parse guardian
+      caregiverName: json['caregiver_name'] as String?, // Assign caregiver_name to caregiverName property
+
     );
   }
 
@@ -64,6 +70,8 @@ class ChildModel {
       childStatus: '', // Assuming this is not provided in the attendance JSON
       parentId: null, // Assuming this is not provided in the attendance JSON
       performances: [], // Assuming performances are not provided in the attendance JSON
+      caregiverName: json['caregiver_name'] as String?, // Assign caregiver_name to caregiverName property
+
     );
   }
 
