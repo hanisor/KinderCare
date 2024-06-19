@@ -16,7 +16,8 @@ class CaregiverBehaviourReport extends StatefulWidget {
 
 class _CaregiverBehaviourReportState extends State<CaregiverBehaviourReport> {
   List<BehaviourModel> behaviourList = [];
-  Map<String, Map<String, Map<int, List<BehaviourModel>>>> groupedBehaviourMap = {};
+  Map<String, Map<String, Map<int, List<BehaviourModel>>>> groupedBehaviourMap =
+      {};
 
   @override
   void initState() {
@@ -52,7 +53,8 @@ class _CaregiverBehaviourReportState extends State<CaregiverBehaviourReport> {
 
                 String date = DateFormat('yyyy-MM-dd')
                     .format(DateTime.parse(behaviourModel.dateTime));
-                String month = DateFormat('yyyy-MM').format(DateTime.parse(behaviourModel.dateTime));
+                String month = DateFormat('yyyy-MM')
+                    .format(DateTime.parse(behaviourModel.dateTime));
                 final dateOfBirthString = child['date_of_birth'];
                 if (dateOfBirthString != null) {
                   try {
@@ -72,7 +74,8 @@ class _CaregiverBehaviourReportState extends State<CaregiverBehaviourReport> {
                     if (groupedBehaviourMap[month]![date]![age] == null) {
                       groupedBehaviourMap[month]![date]![age] = [];
                     }
-                    groupedBehaviourMap[month]![date]![age]!.add(behaviourModel);
+                    groupedBehaviourMap[month]![date]![age]!
+                        .add(behaviourModel);
                   } catch (_) {
                     try {
                       final dob =
@@ -93,7 +96,8 @@ class _CaregiverBehaviourReportState extends State<CaregiverBehaviourReport> {
                       if (groupedBehaviourMap[month]![date]![age] == null) {
                         groupedBehaviourMap[month]![date]![age] = [];
                       }
-                      groupedBehaviourMap[month]![date]![age]!.add(behaviourModel);
+                      groupedBehaviourMap[month]![date]![age]!
+                          .add(behaviourModel);
                     } catch (error) {
                       print('Invalid date of birth format: $dateOfBirthString');
                     }
@@ -118,12 +122,12 @@ class _CaregiverBehaviourReportState extends State<CaregiverBehaviourReport> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
+        title: const Text(
           'Behaviour Report',
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.playlist_add),
+            icon: const Icon(Icons.playlist_add),
             onPressed: () {
               Navigator.push(
                 context,
@@ -151,7 +155,7 @@ class _CaregiverBehaviourReportState extends State<CaregiverBehaviourReport> {
               child: ExpansionTile(
                 title: Text(
                   DateFormat('MMMM yyyy').format(DateTime.parse(month + '-01')),
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -168,7 +172,7 @@ class _CaregiverBehaviourReportState extends State<CaregiverBehaviourReport> {
                       child: ExpansionTile(
                         title: Text(
                           date,
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -185,7 +189,7 @@ class _CaregiverBehaviourReportState extends State<CaregiverBehaviourReport> {
                               child: ExpansionTile(
                                 title: Text(
                                   'Age: $age',
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -193,26 +197,49 @@ class _CaregiverBehaviourReportState extends State<CaregiverBehaviourReport> {
                                   return ListTile(
                                     title: Text(
                                       behaviour.childName ?? 'Unknown Child',
-                                      style: TextStyle(fontWeight: FontWeight.bold),
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold),
                                     ),
                                     subtitle: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
-                                        Text(
-                                          'Parent Name: ${behaviour.childModel?.guardian?.parentName ?? 'Unknown Parent'}', // Display parentModel name
-                                          style: TextStyle(fontWeight: FontWeight.bold),
+                                        RichText(
+                                          text: TextSpan(
+                                            children: [
+                                              const TextSpan(
+                                                text: 'Parent Name: ',
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Color.fromARGB(255, 255, 85, 141), // Replace with your desired color
+                                                ),
+                                              ),
+                                              TextSpan(
+                                                text:
+                                                    '${behaviour.childModel?.guardian?.parentName ?? 'Unknown Parent'}',
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Color
+                                                      .fromARGB(255, 255, 85, 141), // Replace with your desired color
+                                                ),
+                                              ),
+                                            ],
+                                          ),
                                         ),
                                         Text(
                                           'Behaviour: ${behaviour.type}',
-                                          style: TextStyle(fontWeight: FontWeight.bold),
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.bold),
                                         ),
                                         Text(
                                           'Description: ${behaviour.description}',
-                                          style: TextStyle(fontWeight: FontWeight.bold),
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.bold),
                                         ),
                                         Text(
                                           'Time: ${DateFormat('HH:mm').format(DateTime.parse(behaviour.dateTime))}',
-                                          style: TextStyle(fontWeight: FontWeight.bold),
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.bold),
                                         ),
                                       ],
                                     ),

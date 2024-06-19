@@ -375,40 +375,45 @@ class _CaregiverPerformanceState extends State<CaregiverPerformance> {
                   ),
                 ],
               ),
-              DropdownButton<int>(
-                hint: Text('Select age group'),
-                items: childrenByAge.keys.map((int age) {
-                  return DropdownMenuItem<int>(
-                    value: age,
-                    child: Text('Age $age'),
-                  );
-                }).toList(),
-                onChanged: (int? newValue) {
-                  setState(() {
-                    selectedAge = newValue;
-                    childrenList = childrenByAge[newValue] ?? [];
-                  });
-                },
-                value: selectedAge, // Display the selected age
-              ),
-              SizedBox(height: 20),
-              // Dropdown for selecting child
-              DropdownButton<ChildModel>(
-                hint: Text('Select child'),
-                items: childrenList.map((ChildModel child) {
-                  return DropdownMenuItem<ChildModel>(
-                    value: child,
-                    child: Text(child.childName),
-                  );
-                }).toList(),
-                onChanged: (ChildModel? newValue) {
-                  setState(() {
-                    selectedChild = newValue;
-                  });
-                },
-                value: selectedChild,
-              ),
-              SizedBox(height: 20),
+              if (childrenByAge.isNotEmpty) ...[
+                DropdownButton<int>(
+                  hint: Text('Select age group'),
+                  items: childrenByAge.keys.map((int age) {
+                    return DropdownMenuItem<int>(
+                      value: age,
+                      child: Text('Age $age'),
+                    );
+                  }).toList(),
+                  onChanged: (int? newValue) {
+                    setState(() {
+                      selectedAge = newValue;
+                      childrenList = childrenByAge[newValue] ?? [];
+                      selectedChild = null; // Reset the selected child when age group changes
+                    });
+                  },
+                  value: selectedAge, // Display the selected age
+                ),
+                SizedBox(height: 20),
+              ],
+              if (selectedAge != null && childrenList.isNotEmpty) ...[
+                // Dropdown for selecting child
+                DropdownButton<ChildModel>(
+                  hint: Text('Select child'),
+                  items: childrenList.map((ChildModel child) {
+                    return DropdownMenuItem<ChildModel>(
+                      value: child,
+                      child: Text(child.childName),
+                    );
+                  }).toList(),
+                  onChanged: (ChildModel? newValue) {
+                    setState(() {
+                      selectedChild = newValue;
+                    });
+                  },
+                  value: selectedChild,
+                ),
+                SizedBox(height: 20),
+              ],
               // Skills card
               if (selectedChild != null) buildSkillsCard(),
               SizedBox(height: 20),
