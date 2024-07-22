@@ -9,13 +9,11 @@ class ParentAttendanceRecord extends StatefulWidget {
   ParentAttendanceRecord({Key? key, this.parentId});
 
   @override
-  State<ParentAttendanceRecord> createState() =>
-      _ParentAttendanceRecordState();
+  State<ParentAttendanceRecord> createState() => _ParentAttendanceRecordState();
 }
 
 class _ParentAttendanceRecordState extends State<ParentAttendanceRecord> {
   List<ChildModel> childrenList = [];
-  List<dynamic> children = [];
   Map<String, dynamic>? attendanceByDay;
   String errorMessage = '';
 
@@ -27,8 +25,7 @@ class _ParentAttendanceRecordState extends State<ParentAttendanceRecord> {
 
   Future<void> getChildrenData() async {
     try {
-      RequestController req =
-          RequestController(path: 'child/by-guardianId/${widget.parentId}');
+      RequestController req = RequestController(path: 'child/by-guardianId/${widget.parentId}');
       await req.get();
       var response = req.result();
       if (response != null && response.containsKey('children')) {
@@ -61,30 +58,20 @@ class _ParentAttendanceRecordState extends State<ParentAttendanceRecord> {
 
   Future<void> getchildgroupbychildid(int childId, String childName) async {
     try {
-      RequestController req =
-          RequestController(path: 'child-group/childId/$childId');
+      RequestController req = RequestController(path: 'child-group/childId/$childId');
       await req.get();
       var response = req.result();
 
-      if (req.status() == 200) {
-        setState(() {
-          children = response['child_group'];
-        });
-        if (children.isNotEmpty) {
-          int childGroupId = children.first['id'];
-          fetchChildAttendance(childGroupId, childName);
-        } else {
-          showErrorDialog('Child group not found');
-        }
+      if (req.status() == 200 && response != null && response.containsKey('child_group_id')) {
+        int childGroupId = response['child_group_id'];
+        fetchChildAttendance(childGroupId, childName);
       } else {
-        showErrorDialog('Failed to load child group details');
+        showErrorDialog('Child group not found');
       }
     } catch (e) {
       showErrorDialog('Error fetching child group: $e');
     }
   }
-
-    
 
   Future<void> fetchChildAttendance(int childGroupId, String childName) async {
     try {
@@ -93,7 +80,7 @@ class _ParentAttendanceRecordState extends State<ParentAttendanceRecord> {
       await req.post();
       var response = req.result();
 
-      if (response != null && response is Map<String, dynamic>) {
+      if (response != null && response.containsKey('attendance_by_day')) {
         setState(() {
           attendanceByDay = response['attendance_by_day'];
         });
@@ -124,7 +111,6 @@ class _ParentAttendanceRecordState extends State<ParentAttendanceRecord> {
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop();
                 Navigator.of(context).pop();
               },
               child: const Text('OK'),
@@ -290,8 +276,7 @@ class _ParentAttendanceRecordState extends State<ParentAttendanceRecord> {
                                 ),
                                 onTap: () {
                                   int childId = childrenList[index].childId!;
-                                  getchildgroupbychildid(
-                                      childId, childrenList[index].childName);
+                                  getchildgroupbychildid(childId, childrenList[index].childName);
                                 },
                               ),
                             );

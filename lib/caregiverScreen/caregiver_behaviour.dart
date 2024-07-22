@@ -26,16 +26,40 @@ class _CaregiverBehaviourState extends State<CaregiverBehaviour> {
   @override
   void initState() {
     super.initState();
-    getChildrenData(); // Call the function when the widget is initialized
-    dateTime = DateTime.now(); // Initialize dateTime with current date and time
+    dateTime = DateTime.now();
+    fetchGroupId(widget.caregiverId!).then((groupId) {
+      if (groupId != null) {
+        getChildrenData(groupId);
+      } else {
+        print("Failed to get group ID for caregiver");
+      }
+    });
   }
 
-  Future<void> getChildrenData() async {
-    print("Fetching children data for caregiverId: ${widget.caregiverId}"); // Debugging line
+  Future<int?> fetchGroupId(int caregiverId) async {
+    try {
+      RequestController req = RequestController(path: 'get-group');
+      req.setBody({"caregiver_id": caregiverId});
+      await req.post();
+      var response = req.result();
+      if (response != null && response.containsKey('group_id')) {
+        return response['group_id'] as int;
+      } else {
+        print("Failed to fetch group ID");
+        return null;
+      }
+    } catch (e) {
+      print("Error during network request: $e");
+      return null;
+    }
+  }
+
+  Future<void> getChildrenData(int groupId) async {
+    print("Fetching children data for groupid: $groupId"); // Debugging line
 
     try {
-      RequestController req = RequestController(
-          path: 'child-group/caregiverId/${widget.caregiverId}');
+      RequestController req =
+          RequestController(path: 'child-group/caregiverId/$groupId');
       await req.get();
       var response = req.result();
       print("Request result: $response"); // Print the response to see its type
@@ -46,34 +70,39 @@ class _CaregiverBehaviourState extends State<CaregiverBehaviour> {
           print("Children Dataaaa: $childrenData"); // Debugging line
 
           if (childrenData is List) {
-            childrenList = List<ChildModel>.from(childrenData.map((x) => ChildModel(
-                  childId: int.tryParse(x['id']?.toString() ?? ''),
-                  childName: x['name'] as String? ?? '',
-                  childDOB: x['date_of_birth'] as String? ?? '',
-                  childGender: x['gender'] as String? ?? '',
-                  childMykidNumber: x['my_kid_number'] as String? ?? '',
-                  childAllergies: x['allergy'] as String? ?? '',
-                  childStatus: x['status'] as String? ?? '',
-                  parentId: int.tryParse(x['guardian_id']?.toString() ?? ''),
-                  performances: x['performances'] != null && x['performances'] is List
-                      ? List<PerformanceModel>.from(
-                          (x['performances'] as List)
-                          .map((e) => PerformanceModel.fromJson(e as Map<String, dynamic>))
-                        )
-                      : [],
-                )));
+            childrenList =
+                List<ChildModel>.from(childrenData.map((x) => ChildModel(
+                      childId: int.tryParse(x['id']?.toString() ?? ''),
+                      childName: x['name'] as String? ?? '',
+                      childDOB: x['date_of_birth'] as String? ?? '',
+                      childGender: x['gender'] as String? ?? '',
+                      childMykidNumber: x['my_kid_number'] as String? ?? '',
+                      childAllergies: x['allergy'] as String? ?? '',
+                      childStatus: x['status'] as String? ?? '',
+                      parentId:
+                          int.tryParse(x['guardian_id']?.toString() ?? ''),
+                      performances:
+                          x['performances'] != null && x['performances'] is List
+                              ? List<PerformanceModel>.from(
+                                  (x['performances'] as List).map((e) =>
+                                      PerformanceModel.fromJson(
+                                          e as Map<String, dynamic>)))
+                              : [],
+                    )));
 
             // Set selectedChild if the list is not empty
             if (childrenList.isNotEmpty) {
               selectedChild = childrenList[0];
-              print('Selected child dataaaa: ${selectedChild!.childId.toString()}');
+              print(
+                  'Selected child dataaaa: ${selectedChild!.childId.toString()}');
             }
           } else {
             print("Invalid children data format"); // Debugging line
           }
         });
       } else {
-        print("Failed to fetch children data or key 'child_group' not found"); // Debugging line
+        print(
+            "Failed to fetch children data or key 'child_group' not found"); // Debugging line
       }
       print("childrenList: $childrenList");
     } catch (e) {
@@ -127,14 +156,10 @@ class _CaregiverBehaviourState extends State<CaregiverBehaviour> {
     }
   }
 
-  Future<void> _refreshData() async {
-    await getChildrenData();
-  }
-
   // Function to calculate age from date of birth
   String _calculateAge(String dateOfBirth) {
     try {
-      DateTime dob = DateFormat("yyyy-MM-dd").parse(dateOfBirth);
+      DateTime dob = DateFormat("dd/MM/yyyy").parse(dateOfBirth);
       DateTime today = DateTime.now();
       int age = today.year - dob.year;
       if (today.month < dob.month ||
@@ -154,151 +179,148 @@ class _CaregiverBehaviourState extends State<CaregiverBehaviour> {
       appBar: AppBar(
         title: Text('Behaviour'),
       ),
-      body: RefreshIndicator(
-        onRefresh: _refreshData,
-        child: Container(
-          padding: EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              DropdownButton(
-                hint: const Text(
-                  "Select Child ",
-                  style: TextStyle(
-                    color: Colors.pink, // Pink text color
-                  ),
-                ),
-                value: selectedChild?.childName,
-                icon: const Icon(
-                  Icons.arrow_drop_down, // Arrow icon
-                  color: Colors.pink, // Pink color
-                ),
-                elevation: 4,
-                style: const TextStyle(
+      body: Container(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            DropdownButton(
+              hint: const Text(
+                "Select Child ",
+                style: TextStyle(
                   color: Colors.pink, // Pink text color
+                ),
+              ),
+              value: selectedChild?.childName,
+              icon: const Icon(
+                Icons.arrow_drop_down, // Arrow icon
+                color: Colors.pink, // Pink color
+              ),
+              elevation: 4,
+              style: const TextStyle(
+                color: Colors.pink, // Pink text color
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+              underline: Container(
+                height: 2,
+                color: Colors.pink, // Pink underline
+              ),
+              items: childrenList.map<DropdownMenuItem<String>>((child) {
+                return DropdownMenuItem<String>(
+                  value: child.childName,
+                  child: Text(
+                    child.childName,
+                    style: const TextStyle(
+                      color: Colors.black, // Black text color
+                    ),
+                  ),
+                );
+              }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  selectedChild = childrenList
+                      .firstWhere((child) => child.childName == value);
+                });
+              },
+            ),
+            if (selectedChild != null) ...[
+              const SizedBox(height: 10),
+              Text(
+                "Child Age: ${_calculateAge(selectedChild!.childDOB)}",
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
-                underline: Container(
-                  height: 2,
-                  color: Colors.pink, // Pink underline
-                ),
-                items: childrenList.map<DropdownMenuItem<String>>((child) {
-                  return DropdownMenuItem<String>(
-                    value: child.childName,
-                    child: Text(
-                      child.childName,
-                      style: const TextStyle(
-                        color: Colors.black, // Black text color
-                      ),
-                    ),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    selectedChild = childrenList
-                        .firstWhere((child) => child.childName == value);
-                  });
-                },
               ),
-              if (selectedChild != null) ...[
-                const SizedBox(height: 10),
+            ],
+            const SizedBox(height: 10),
+            DropdownButtonFormField<String>(
+              hint: const Text(
+                "Select Emotion",
+                style: TextStyle(
+                  color: Colors.pink, // Pink text color
+                ),
+              ),
+              value: type,
+              icon: const Icon(
+                Icons.arrow_drop_down, // Arrow icon
+                color: Colors.pink, // Pink color
+              ),
+              elevation: 4,
+              style: const TextStyle(
+                color: Colors.pink, // Pink text color
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+              decoration: const InputDecoration(
+                labelText: 'Emotion',
+                labelStyle: TextStyle(color: Colors.pink),
+                enabledBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.pink),
+                ),
+                focusedBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.pink),
+                ),
+              ),
+              items: emotionTypes.map((emotion) {
+                return DropdownMenuItem<String>(
+                  value: emotion,
+                  child: Text(
+                    emotion,
+                    style: const TextStyle(
+                      color: Colors.black, // Black text color
+                    ),
+                  ),
+                );
+              }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  type = value;
+                });
+              },
+            ),
+            const SizedBox(height: 20),
+            TextField(
+              controller: behaviourController,
+              decoration: const InputDecoration(
+                labelText: 'Description',
+                labelStyle: TextStyle(color: Colors.pink),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.pink),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.pink),
+                ),
+              ),
+              maxLines: null,
+              onChanged: (value) {
+                setState(() {
+                  description = value;
+                });
+              },
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
                 Text(
-                  "Child Age: ${_calculateAge(selectedChild!.childDOB)}",
+                  "Date & Time: ${DateFormat("yyyy-MM-dd HH:mm:ss").format(dateTime!)}",
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ],
-              const SizedBox(height: 10),
-              DropdownButtonFormField<String>(
-                hint: const Text(
-                  "Select Emotion",
-                  style: TextStyle(
-                    color: Colors.pink, // Pink text color
-                  ),
-                ),
-                value: type,
-                icon: const Icon(
-                  Icons.arrow_drop_down, // Arrow icon
-                  color: Colors.pink, // Pink color
-                ),
-                elevation: 4,
-                style: const TextStyle(
-                  color: Colors.pink, // Pink text color
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-                decoration: const InputDecoration(
-                  labelText: 'Emotion',
-                  labelStyle: TextStyle(color: Colors.pink),
-                  enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.pink),
-                  ),
-                  focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.pink),
-                  ),
-                ),
-                items: emotionTypes.map((emotion) {
-                  return DropdownMenuItem<String>(
-                    value: emotion,
-                    child: Text(
-                      emotion,
-                      style: const TextStyle(
-                        color: Colors.black, // Black text color
-                      ),
-                    ),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    type = value;
-                  });
-                },
-              ),
-              const SizedBox(height: 20),
-              TextField(
-                controller: behaviourController,
-                decoration: const InputDecoration(
-                  labelText: 'Description',
-                  labelStyle: TextStyle(color: Colors.pink),
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.pink),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.pink),
-                  ),
-                ),
-                maxLines: null,
-                onChanged: (value) {
-                  setState(() {
-                    description = value;
-                  });
-                },
-              ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    "Date & Time: ${DateFormat("yyyy-MM-dd HH:mm:ss").format(dateTime!)}",
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  addBehaviour();
-                },
-                child: const Text('Submit'),
-              ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                addBehaviour();
+              },
+              child: const Text('Submit'),
+            ),
+          ],
         ),
       ),
     );

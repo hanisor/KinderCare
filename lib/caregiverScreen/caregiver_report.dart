@@ -20,14 +20,38 @@ class _CaregiverReportState extends State<CaregiverReport> {
   @override
   void initState() {
     super.initState();
-    getChildrenData();
+    fetchGroupId(widget.caregiverId!).then((groupId) {
+      if (groupId != null) {
+        getChildrenData(groupId);
+      } else {
+        print("Failed to get group ID for caregiver");
+      }
+    });
+  }
+  Future<int?> fetchGroupId(int caregiverId) async {
+    try {
+      RequestController req = RequestController(path: 'get-group');
+      req.setBody({"caregiver_id": caregiverId});
+      await req.post();
+      var response = req.result();
+      if (response != null && response.containsKey('group_id')) {
+        return response['group_id'] as int;
+      } else {
+        print("Failed to fetch group ID");
+        return null;
+      }
+    } catch (e) {
+      print("Error during network request: $e");
+      return null;
+    }
   }
 
-  Future<void> getChildrenData() async {
-    print("Fetching children data for caregiverId: ${widget.caregiverId}"); // Debugging line
+  Future<void> getChildrenData(int groupId) async {
+    print("Fetching children data for groupid: $groupId"); // Debugging line
 
     try {
-      RequestController req = RequestController(path: 'child-group/caregiverId/${widget.caregiverId}');
+      RequestController req =
+          RequestController(path: 'child-group/caregiverId/$groupId');
       await req.get();
       var response = req.result();
       print("Request result: $response"); // Print the response to see its type

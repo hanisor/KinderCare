@@ -301,9 +301,9 @@ class _CaregiverEditProfileState extends State<CaregiverEditProfile> {
                       ElevatedButton(
                         style: ButtonStyle(
                           foregroundColor:
-                              MaterialStateProperty.all(Colors.white),
+                              WidgetStateProperty.all(Colors.white),
                           backgroundColor:
-                              MaterialStateProperty.all(Colors.pinkAccent),
+                              WidgetStateProperty.all(Colors.pinkAccent),
                         ),
                         onPressed: () async {
                           try {

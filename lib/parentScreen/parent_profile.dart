@@ -177,7 +177,7 @@ class _ParentProfileState extends State<ParentProfile> {
                           ),
                           onTap: () {
                             // Navigate to edit child profile screen
-                            print('childId : ${child.getChildId}');
+                            print('childIdd : ${child.getChildId}');
                             Navigator.push(
                               context,
                               MaterialPageRoute(
