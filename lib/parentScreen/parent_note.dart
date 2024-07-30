@@ -12,56 +12,63 @@ class ParentNote extends StatefulWidget {
   State<ParentNote> createState() => _ParentNoteState();
 }
 
-class _ParentNoteState extends State<ParentNote> {
+class _ParentNoteState extends State<ParentNote> with SingleTickerProviderStateMixin {
   TextEditingController noteDetailsController = TextEditingController();
   String status = "UNREAD";
   String senderType = "parent";
   DateTime? dateTime;
-  List<NoteModel> noteList = []; // List to hold checklist items
-  CaregiverModel? selectedCaregiver; // Initialize selectedChild
+  List<NoteModel> noteList = [];
+  List<NoteModel> todayNotes = [];
+  List<NoteModel> allNotes = [];
+  CaregiverModel? selectedCaregiver;
   List<CaregiverModel> caregiverList = [];
+  String? selectedMonth;
+  int? selectedDay;
+
+  late TabController _tabController;
 
   @override
   void dispose() {
     noteDetailsController.dispose();
+    _tabController.dispose();
     super.dispose();
   }
 
   Future<void> getCaregiverData() async {
-    RequestController req = RequestController(path: 'caregiver-data');
-    await req.get();
-    var response = req.result();
-    print("req result : $response"); // Print the response to see its type
+  String path = 'get-caregiver/${widget.parentId}';
+  RequestController req = RequestController(path: path);
 
-    // Assuming response is a List<dynamic>
-    if (response != null && response is List) {
-      setState(() {
-        var parentData = response;
-        print("Parent Data: $parentData"); // Debugging line
-        caregiverList = parentData
-            .map((x) => CaregiverModel(
-                  id: x['id'] as int,
-                  caregiverName: x['name'] as String,
-                  caregiverPhoneNumber: x['phone_number'] as String,
-                  caregiverICNumber: x['ic_number'] as String,
-                  caregiverEmail: x['email'] as String,
-                  caregiverUsername: x['username'] as String,
-                  caregiverPassword: x['password'] as String,
-                  caregiverRole: x['role'] as String,
-                  caregiverStatus: x['status'] as String,
-                ))
-            .toList();
+  await req.get(); // Use get method as usual
+  var response = req.result();
+  print("req result : $response");
 
-        // Set selectedParent if the list is not empty
-        if (caregiverList.isNotEmpty) {
-          selectedCaregiver = caregiverList[0];
-        }
-      });
-    } else {
-      print("Failed to fetch parent data"); // Debugging line
-    }
-    print("[caregiverList] : $caregiverList");
+  if (response != null && response is Map && response.containsKey('caregivers')) {
+    var caregivers = response['caregivers'] as List;
+    setState(() {
+      caregiverList = caregivers
+          .map((x) => CaregiverModel(
+                id: x['id'] as int,
+                caregiverName: x['name'] as String,
+                caregiverPhoneNumber: x['phone_number'] as String,
+                caregiverICNumber: x['ic_number'] as String,
+                caregiverEmail: x['email'] as String,
+                caregiverUsername: x['username'] as String,
+                caregiverPassword: x['password'] as String,
+                caregiverRole: x['role'] as String,
+                caregiverStatus: x['status'] as String,
+              ))
+          .toList();
+
+      if (caregiverList.isNotEmpty) {
+        selectedCaregiver = caregiverList[0];
+        fetchNotesBycaregiverId(selectedCaregiver!.id);
+      }
+    });
+  } else {
+    print("Failed to fetch caregiver data");
   }
+}
+
 
   Future<void> sendNoteToAllCaregivers() async {
     String currentDateTime = DateTime.now().toString();
@@ -80,7 +87,7 @@ class _ParentNoteState extends State<ParentNote> {
       "detail": noteDetailsController.text,
       "status": status,
       "sender_type": senderType,
-      "date_time": formattedDateTime, // Convert DateTime to String
+      "date_time": formattedDateTime,
       "guardian_id": widget.parentId,
       "caregiver_id": selectedCaregiver!.id.toString(),
     });
@@ -92,8 +99,6 @@ class _ParentNoteState extends State<ParentNote> {
       print('response = $result');
       if (result != null && result.containsKey('notes')) {
         print('Checklist item saved successfully');
-        // Clear text field after successful submission
-        //noteDetailsController.clear();
         fetchNotesBycaregiverId(widget.parentId);
       } else {
         print('Error saving note item: ${response.statusCode}');
@@ -117,208 +122,276 @@ class _ParentNoteState extends State<ParentNote> {
     }
   }
 
-  Future<void> fetchNotesBycaregiverId(int? caregiverId) async {
-    RequestController req = RequestController(
-        path: 'note/by-caregiverId/$caregiverId'); // Pass email as parameter
-    print("caregiver id : ${selectedCaregiver?.id}");
-    await req.get();
-    var response = req.result();
-    if (response != null && response.containsKey('notes')) {
-      var noteData = response['notes'];
-      print("JSON Data: $noteData"); // Print JSON data for debugging
-      setState(() {
-        noteList = List<NoteModel>.from(noteData.map((x) {
-          // Ensure noteId is parsed as an integer
-          x['id'] = int.tryParse(x['id'].toString());
-          print("noteId: ${x['id']}"); // Debug noteId
-          print("noteStatus: ${x['status']}"); // Debug noteStatus
-          return NoteModel.fromJson(x);
-        }));
+Future<void> fetchNotesBycaregiverId(int? caregiverId) async {
+  RequestController req = RequestController(path: 'note/by-caregiverId/$caregiverId');
+  print("caregiver id: ${caregiverId}");
 
-        // Filter notes with status "unread"
-        noteList = noteList
-            .where((note) =>
-                note.noteStatus == 'UNREAD' &&
-                note.caregiverId == selectedCaregiver!.id &&
-                note.senderType == 'parent' && // Filter by sender type 
-                DateTime.now().difference(note.noteDateTime).inDays <= 1)
-            .toList();
+  await req.get();
+  var response = req.result();
 
-        // Sort notes by date time (optional)
-        noteList.sort((a, b) => a.noteDateTime.compareTo(b.noteDateTime));
+  if (response != null && response.containsKey('notes')) {
+    var noteData = response['notes'];
+    print("JSON Data: $noteData");
 
-        print("Updated noteList: $noteList"); // Print updated noteList
+    setState(() {
+      // Convert JSON data to NoteModel instances
+      noteList = List<NoteModel>.from(noteData.map((x) {
+        x['id'] = int.tryParse(x['id'].toString());
+        print("noteId: ${x['id']}");
+        print("noteStatus: ${x['status']}");
+        return NoteModel.fromJson(x);
+      }));
 
-        print("Updated noteList: $noteList"); // Print updated noteList
-      });
-    }
+      // Filter notes by parentId
+      noteList = noteList.where((note) => note.parentId == widget.parentId).toList();
+
+      // Get today's notes
+      DateTime now = DateTime.now();
+      todayNotes = noteList.where((note) {
+        return note.noteDateTime.year == now.year &&
+            note.noteDateTime.month == now.month &&
+            note.noteDateTime.day == now.day;
+      }).toList();
+
+      // Filter all notes by sender type
+      allNotes = noteList.where((note) => note.senderType == 'parent').toList();
+
+      // Sort notes
+      noteList.sort((a, b) => b.noteDateTime.compareTo(a.noteDateTime));
+      todayNotes.sort((a, b) => b.noteDateTime.compareTo(a.noteDateTime));
+      allNotes.sort((a, b) => b.noteDateTime.compareTo(a.noteDateTime));
+
+      print("Updated noteList: $noteList");
+    });
+  } else {
+    print("Failed to fetch notes data");
   }
+}
+
 
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 2, vsync: this);
     getCaregiverData();
-    if (selectedCaregiver != null) {
-      fetchNotesBycaregiverId(selectedCaregiver!.id);
-    }
   }
 
-
   Future<void> _refreshNotes() async {
-    // Fetch notes for the selected parent
     await fetchNotesBycaregiverId(selectedCaregiver?.id);
   }
 
-   @override
+  List<NoteModel> getFilteredNotes() {
+    if (selectedMonth == null && selectedDay == null) {
+      return allNotes;
+    }
+
+    return allNotes.where((note) {
+      bool matchesMonth = selectedMonth == null || DateFormat.MMMM().format(note.noteDateTime) == selectedMonth;
+      bool matchesDay = selectedDay == null || note.noteDateTime.day == selectedDay;
+      return matchesMonth && matchesDay;
+    }).toList();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Notes'),
       ),
       body: RefreshIndicator(
-        // Assign onRefresh callback to trigger refresh
         onRefresh: _refreshNotes,
-        child: Container(
-          padding: EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              DropdownButton(
-                hint: const Text(
-                  "Select Caregiver Name",
-                  style: TextStyle(
-                    color: Colors.pink,
-                  ),
-                ),
-                value: selectedCaregiver,
-                icon: const Icon(
-                  Icons.arrow_drop_down,
-                  color: Colors.pink,
-                ),
-                elevation: 4,
-                style: const TextStyle(
-                  color: Colors.pink,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-                underline: Container(
-                  height: 2,
-                  color: Colors.pink,
-                ),
-                items: caregiverList.map<DropdownMenuItem<CaregiverModel>>((parent) {
-                  return DropdownMenuItem<CaregiverModel>(
-                    value: parent,
-                    child: Text(
-                      parent.caregiverName,
-                      style: const TextStyle(
-                        color: Colors.black,
-                      ),
-                    ),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    selectedCaregiver = value;
-                    fetchNotesBycaregiverId(selectedCaregiver?.id);
-                  });
-                },
-              ),
-              if (selectedCaregiver != null)
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [                  
-                    const SizedBox(height: 8),
-                    Text(
-                      "Phone number: ${selectedCaregiver!.caregiverPhoneNumber}",
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        child: Column(
+          children: [
+            Padding(
+              padding: EdgeInsets.all(16),
+              child: Column(
                 children: [
-                  Expanded(
-                    child: TextField(
-                      controller: noteDetailsController,
-                      decoration: InputDecoration(labelText: 'Enter quick note'),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  ElevatedButton(
-                    onPressed: () {
-                      sendNoteToAllCaregivers();
-                      noteDetailsController.clear(); // Clear the text field here
-                    },
-                    child: const Text('Send'),
-                  ),
-                ],
-              ),
-              // Display sent notes to all caregivers
-              Expanded(
-                child: ListView.builder(
-                  itemCount: noteList.length,
-                  itemBuilder: (context, index) {
-                    var note =
-                        noteList.reversed.toList()[index]; // Reverse the list here
-                    return Dismissible(
-                      key: UniqueKey(),
-                      onDismissed: (direction) {
-                        // Handle note deletion
-                        // deleteNoteAtIndex(index);
-                      },
-                      background: Container(
-                        color: Colors.red,
-                        child: const Icon(Icons.delete, color: Colors.white),
-                        alignment: Alignment.centerRight,
-                        padding: const EdgeInsets.only(right: 16.0),
+                  DropdownButton(
+                    hint: const Text(
+                      "Select Caregiver Name",
+                      style: TextStyle(
+                        color: Colors.pink,
                       ),
-                      child: Card(
-                        elevation: 4,
-                        margin:
-                            const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                note.noteDetails,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                _formatDateTime(note.noteDateTime),
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                            ],
+                    ),
+                    value: selectedCaregiver,
+                    icon: const Icon(
+                      Icons.arrow_drop_down,
+                      color: Colors.pink,
+                    ),
+                    elevation: 4,
+                    style: const TextStyle(
+                      color: Colors.pink,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    underline: Container(
+                      height: 2,
+                      color: Colors.pink,
+                    ),
+                    items: caregiverList
+                        .map<DropdownMenuItem<CaregiverModel>>((parent) {
+                      return DropdownMenuItem<CaregiverModel>(
+                        value: parent,
+                        child: Text(
+                          parent.caregiverName,
+                          style: const TextStyle(
+                            color: Colors.black,
                           ),
                         ),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        selectedCaregiver = value;
+                        fetchNotesBycaregiverId(selectedCaregiver?.id);
+                      });
+                    },
+                  ),
+                  if (selectedCaregiver != null)
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 8),
+                        Text(
+                          "Phone number: ${selectedCaregiver!.caregiverPhoneNumber}",
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: noteDetailsController,
+                          decoration:
+                              InputDecoration(labelText: 'Enter quick note'),
+                        ),
                       ),
-                    );
-                  },
-                ),
+                      const SizedBox(width: 8),
+                      ElevatedButton(
+                        onPressed: () {
+                          sendNoteToAllCaregivers();
+                          noteDetailsController.clear();
+                        },
+                        child: const Text('Send'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                ],
               ),
-            ],
-          ),
+            ),
+            TabBar(
+              controller: _tabController,
+              tabs: [
+                Tab(text: "Today's Notes"),
+                Tab(text: 'All Notes'),
+              ],
+            ),
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildNotesList(todayNotes),
+                  _buildNotesList(allNotes),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
+  Widget _buildNotesList(List<NoteModel> notes) {
+    Map<String, List<NoteModel>> groupedNotes = {};
+    for (var note in notes) {
+      String dateKey = DateFormat.yMMMMd().format(note.noteDateTime);
+      if (!groupedNotes.containsKey(dateKey)) {
+        groupedNotes[dateKey] = [];
+      }
+      groupedNotes[dateKey]!.add(note);
+    }
+
+    List<Widget> noteWidgets = [];
+    groupedNotes.forEach((date, notes) {
+      noteWidgets.add(
+        Card(
+          color: Colors.lightBlue[50],
+          margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Text(
+              date,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Color.fromARGB(255, 0, 0, 0),
+              ),
+            ),
+          ),
+        ),
+      );
+      noteWidgets.addAll(notes.map((note) => Card(
+            elevation: 4,
+            margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    note.noteDetails,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _formatDateTime(note.noteDateTime),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Status: ${note.noteStatus}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: note.noteStatus == 'UNREAD'
+                          ? Colors.red
+                          : Colors.green,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          )));
+    });
+
+    return ListView(
+      children: noteWidgets,
+    );
+  }
+
   String _formatDateTime(DateTime dateTime) {
     String time =
-        DateFormat.jm().format(dateTime); // Format time in 12-hour system
-    String date = DateFormat.yMMMd().format(dateTime); // Format date
+        DateFormat.jm().format(dateTime);
+    String date = DateFormat.yMMMd().format(dateTime);
     return '$time, $date';
   }
 }

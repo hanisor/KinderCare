@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:kindercare/model/behaviour_model.dart';
 import 'package:kindercare/model/child_model.dart';
 import 'package:kindercare/request_controller.dart';
@@ -7,13 +8,19 @@ import 'package:kindercare/request_controller.dart';
 class ParentBehaviour extends StatefulWidget {
   final int? parentId;
   ParentBehaviour({Key? key, this.parentId});
+
   @override
   State<ParentBehaviour> createState() => _ParentBehaviourState();
 }
 
 class _ParentBehaviourState extends State<ParentBehaviour> {
   List<ChildModel> childrenList = [];
-  List<BehaviourModel> behaviourList = []; // List to hold checklist items
+  List<BehaviourModel> behaviourList = [];
+
+  // Summary data for first tab
+  Map<String, Map<String, Map<String, int>>> summaryBehaviourMap = {};
+
+  // Grouped data for second tab
   Map<String, Map<String, Map<String, List<BehaviourModel>>>> groupedBehaviourMap = {};
 
   Future<void> getChildrenData() async {
@@ -41,7 +48,6 @@ class _ParentBehaviourState extends State<ParentBehaviour> {
           print("Invalid children data format"); // Debugging line
         }
       });
-      // Fetch behaviours after children data has been fetched
       await fetchBehaviours();
     } else {
       print("Failed to fetch children data"); // Debugging line
@@ -50,7 +56,6 @@ class _ParentBehaviourState extends State<ParentBehaviour> {
   }
 
   Future<void> fetchBehaviours() async {
-    // Fetch behaviours for all children associated with the parent
     for (var child in childrenList) {
       RequestController req = RequestController(path: 'behaviour/by-childId/${child.childId}');
       print("child.childId : ${child.childId}");
@@ -59,7 +64,6 @@ class _ParentBehaviourState extends State<ParentBehaviour> {
       var response = req.result();
       print("req result : $response"); // Print the response to see its type
       if (response != null && response.containsKey('behaviours')) {
-        // Process the response data here
         var behaviourData = response['behaviours'];
         print("behaviour Data: $behaviourData"); // Print behaviour data for debugging
 
@@ -71,7 +75,33 @@ class _ParentBehaviourState extends State<ParentBehaviour> {
         });
       }
     }
+    _summarizeBehaviours();
     _groupBehavioursByMonthDayAndName();
+  }
+
+  void _summarizeBehaviours() {
+    summaryBehaviourMap.clear();
+
+    for (var behaviour in behaviourList) {
+      DateTime behaviourDate = DateTime.parse(behaviour.dateTime);
+      String monthYear = DateFormat('yyyy-MM').format(behaviourDate);
+      ChildModel child = childrenList.firstWhere((child) => child.childId == behaviour.childId);
+      String childName = child.childName;
+      String behaviourType = behaviour.type;
+
+      if (!summaryBehaviourMap.containsKey(childName)) {
+        summaryBehaviourMap[childName] = {};
+      }
+      if (!summaryBehaviourMap[childName]!.containsKey(monthYear)) {
+        summaryBehaviourMap[childName]![monthYear] = {};
+      }
+      if (!summaryBehaviourMap[childName]![monthYear]!.containsKey(behaviourType)) {
+        summaryBehaviourMap[childName]![monthYear]![behaviourType] = 0;
+      }
+
+      summaryBehaviourMap[childName]![monthYear]![behaviourType] =
+          summaryBehaviourMap[childName]![monthYear]![behaviourType]! + 1;
+    }
   }
 
   void _groupBehavioursByMonthDayAndName() {
@@ -96,7 +126,6 @@ class _ParentBehaviourState extends State<ParentBehaviour> {
       }
       String childName = child.childName;
       String childDOB = child.childDOB;
-      // ignore: unused_local_variable
       int childAge;
       try {
         childAge = _calculateAge(childDOB);
@@ -119,7 +148,6 @@ class _ParentBehaviourState extends State<ParentBehaviour> {
     }
   }
 
-  // Function to calculate age from date of birth
   int _calculateAge(String dateOfBirth) {
     try {
       DateTime dob = DateFormat("yyyy-MM-dd").parse(dateOfBirth);
@@ -132,7 +160,7 @@ class _ParentBehaviourState extends State<ParentBehaviour> {
       return age;
     } catch (e) {
       print("Error parsing date of birth: $e");
-      return -1; // Return a negative value to indicate an error
+      return -1;
     }
   }
 
@@ -143,109 +171,185 @@ class _ParentBehaviourState extends State<ParentBehaviour> {
   @override
   void initState() {
     super.initState();
-    getChildrenData(); // Fetch children data when the widget initializes
+    getChildrenData();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Behaviour Report'),
-      ),
-      body: RefreshIndicator(
-        onRefresh: _refreshData,
-        child: ListView.builder(
-          itemCount: groupedBehaviourMap.length,
-          itemBuilder: (BuildContext context, int index) {
-            String month = groupedBehaviourMap.keys.elementAt(index);
-            Map<String, Map<String, List<BehaviourModel>>> dayGroupMap = groupedBehaviourMap[month]!;
-            return Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Card(
-                color: Colors.pink[50],
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15.0),
-                ),
-                child: ExpansionTile(
-                  title: Text(
-                    DateFormat('MMMM yyyy').format(DateTime.parse(month + '-01')),
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  children: dayGroupMap.entries.map((dayEntry) {
-                    String date = dayEntry.key;
-                    Map<String, List<BehaviourModel>> nameGroupMap = dayEntry.value;
-                    return Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Card(
-                        color: Colors.green[50],
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15.0),
-                        ),
-                        child: ExpansionTile(
-                          title: Text(
-                            DateFormat('dd MMMM yyyy').format(DateTime.parse(date)),
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          children: nameGroupMap.entries.map((nameEntry) {
-                            String childName = nameEntry.key;
-                            List<BehaviourModel> behaviours = nameEntry.value;
-                            ChildModel child;
-                            try {
-                              child = childrenList.firstWhere((child) => child.childName == childName);
-                            } catch (e) {
-                              print("Child not found for name: $childName");
-                              return Container();
-                            }
-                            int childAge;
-                            try {
-                              childAge = _calculateAge(child.childDOB);
-                            } catch (e) {
-                              print("Invalid child DOB format: ${child.childDOB}");
-                              return Container();
-                            }
-                            return Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Card(
-                                color: Colors.blue[50],
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(15.0),
-                                ),
-                                child: ExpansionTile(
-                                  title: Text(
-                                    '$childName (Age: $childAge)',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  children: behaviours.map((behaviour) {
-                                    return ListTile(
-                                      title: Text(
-                                        'Type: ${behaviour.type}',
-                                        style: TextStyle(fontWeight: FontWeight.bold),
-                                      ),
-                                      subtitle: Text(
-                                        'Description: ${behaviour.description}\nDate & Time: ${behaviour.dateTime}',
-                                      ),
-                                    );
-                                  }).toList(),
-                                ),
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
-            );
-          },
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('Behaviour Report'),
+          bottom: TabBar(
+            tabs: [
+              Tab(text: 'Summary'),
+              Tab(text: 'Detailed'),
+            ],
+          ),
+        ),
+        body: TabBarView(
+          children: [
+            _buildSummaryTab(),
+            _buildDetailedTab(),
+          ],
         ),
       ),
     );
   }
+
+  Widget _buildSummaryTab() {
+    return RefreshIndicator(
+      onRefresh: _refreshData,
+      child: ListView.builder(
+        itemCount: summaryBehaviourMap.length,
+        itemBuilder: (BuildContext context, int index) {
+          String childName = summaryBehaviourMap.keys.elementAt(index);
+          Map<String, Map<String, int>> monthGroupMap = summaryBehaviourMap[childName]!;
+          return Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  childName,
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                ),
+                ...monthGroupMap.entries.map((monthEntry) {
+                  String month = monthEntry.key;
+                  Map<String, int> typeGroupMap = monthEntry.value;
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Card(
+                      color: Colors.green[50],
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15.0),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Text(
+                              DateFormat('MMMM yyyy').format(DateTime.parse(month + '-01')),
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            height: 200,
+                            child: SfCircularChart(
+                              series: <CircularSeries>[
+                                PieSeries<BehaviourTypeCount, String>(
+                                  dataSource: _createSampleData(typeGroupMap),
+                                  xValueMapper: (BehaviourTypeCount data, _) => data.type,
+                                  yValueMapper: (BehaviourTypeCount data, _) => data.count,
+                                  dataLabelMapper: (BehaviourTypeCount data, _) => '${data.type}: ${data.count}',
+                                  dataLabelSettings: DataLabelSettings(isVisible: true),
+                                )
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildDetailedTab() {
+    return RefreshIndicator(
+      onRefresh: _refreshData,
+      child: ListView.builder(
+        itemCount: groupedBehaviourMap.length,
+        itemBuilder: (BuildContext context, int index) {
+          String monthYear = groupedBehaviourMap.keys.elementAt(index);
+          Map<String, Map<String, List<BehaviourModel>>> dayGroupMap = groupedBehaviourMap[monthYear]!;
+          return Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  DateFormat('MMMM yyyy').format(DateTime.parse(monthYear + '-01')),
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                ),
+                ...dayGroupMap.entries.map((dayEntry) {
+                  String day = dayEntry.key;
+                  Map<String, List<BehaviourModel>> childGroupMap = dayEntry.value;
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Card(
+                      color: Colors.blue[50],
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15.0),
+                      ),
+                      child: ExpansionTile(
+                        title: Text(
+                          DateFormat('dd MMM yyyy').format(DateTime.parse(day)),
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        children: [
+                          ...childGroupMap.entries.map((childEntry) {
+                            String childName = childEntry.key;
+                            List<BehaviourModel> behaviours = childEntry.value;
+                            return Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    childName,
+                                    style: TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                                  SizedBox(height: 10),
+                                  ...behaviours.map((behaviour) {
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(vertical: 4.0),
+                                      child: Card(
+                                        color: Colors.white,
+                                        child: ListTile(
+                                          title: Text(behaviour.type),
+                                          subtitle: Text(behaviour.description),
+                                        ),
+                                      ),
+                                    );
+                                  }).toList(),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                        ],
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  List<BehaviourTypeCount> _createSampleData(Map<String, int> typeGroupMap) {
+    return typeGroupMap.entries
+        .map((entry) => BehaviourTypeCount(type: entry.key, count: entry.value))
+        .toList();
+  }
+}
+
+class BehaviourTypeCount {
+  final String type;
+  final int count;
+
+  BehaviourTypeCount({required this.type, required this.count});
 }

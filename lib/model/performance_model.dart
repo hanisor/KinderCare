@@ -36,4 +36,10 @@ class PerformanceModel {
       childModel: json['child'] != null ? ChildModel.fromJson(json['child']) : null,
     );
   }
+
+  // Method to calculate performance change
+  static int calculateChange(int oldLevel, int newLevel) {
+    return newLevel - oldLevel;
+  }
+  
 }
