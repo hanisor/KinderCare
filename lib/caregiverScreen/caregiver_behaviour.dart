@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:kindercare/caregiverScreen/caregiver_behaviorReport.dart';
 import 'package:kindercare/model/behaviour_model.dart';
 import 'package:kindercare/model/child_model.dart';
 import 'package:kindercare/model/performance_model.dart';
@@ -18,8 +19,8 @@ class _CaregiverBehaviourState extends State<CaregiverBehaviour> {
   String? type;
   String? description;
   DateTime? dateTime;
-  List<BehaviourModel> behaviourList = []; // List to hold checklist items
-  ChildModel? selectedChild; // Initialize selectedChild
+  List<BehaviourModel> behaviourList = [];
+  ChildModel? selectedChild;
   List<ChildModel> childrenList = [];
   List<String> emotionTypes = ['Happy', 'Sad', 'Angry', 'Excited', 'Calm'];
 
@@ -55,19 +56,19 @@ class _CaregiverBehaviourState extends State<CaregiverBehaviour> {
   }
 
   Future<void> getChildrenData(int groupId) async {
-    print("Fetching children data for groupid: $groupId"); // Debugging line
+    print("Fetching children data for groupid: $groupId");
 
     try {
       RequestController req =
           RequestController(path: 'child-group/caregiverId/$groupId');
       await req.get();
       var response = req.result();
-      print("Request result: $response"); // Print the response to see its type
+      print("Request result: $response");
 
       if (response != null && response.containsKey('group')) {
         setState(() {
           var childrenData = response['group'];
-          print("Children Dataaaa: $childrenData"); // Debugging line
+          print("Children Dataaaa: $childrenData");
 
           if (childrenData is List) {
             childrenList =
@@ -90,19 +91,17 @@ class _CaregiverBehaviourState extends State<CaregiverBehaviour> {
                               : [],
                     )));
 
-            // Set selectedChild if the list is not empty
             if (childrenList.isNotEmpty) {
               selectedChild = childrenList[0];
               print(
                   'Selected child dataaaa: ${selectedChild!.childId.toString()}');
             }
           } else {
-            print("Invalid children data format"); // Debugging line
+            print("Invalid children data format");
           }
         });
       } else {
-        print(
-            "Failed to fetch children data or key 'child_group' not found"); // Debugging line
+        print("Failed to fetch children data or key 'child_group' not found");
       }
       print("childrenList: $childrenList");
     } catch (e) {
@@ -124,12 +123,6 @@ class _CaregiverBehaviourState extends State<CaregiverBehaviour> {
 
       RequestController req = RequestController(path: 'add-behaviour');
 
-      // Debugging: Print the values of type, description, dateTime, and selectedChild
-      print('Type: $type');
-      print('Description: $description');
-      print('Date & Time: $dateTime');
-      print('Selected Child: ${selectedChild!.childId}');
-
       req.setBody({
         "type": type,
         "description": description,
@@ -143,34 +136,83 @@ class _CaregiverBehaviourState extends State<CaregiverBehaviour> {
         var result = req.result();
 
         if (result != null) {
-          print('Checklist item saved successfully');
+          print('Behavior report saved successfully');
+          await showCustomDialog(
+            context,
+            'Success!',
+            'Behavior report added successfully!',
+            Icons.check_circle,
+            Colors.green,
+          );
+          if (mounted) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => CaregiverBehaviourReport(),
+              ),
+            );
+          }
         } else {
-          print('Error saving checklist item');
+          print('Error saving behavior report');
+          await showCustomDialog(
+            context,
+            'Error',
+            'Failed to save behavior report.',
+            Icons.error,
+            Colors.red,
+          );
         }
       } else {
         print(
             'Error: HTTP request failed with status code ${response.statusCode}');
+        await showCustomDialog(
+          context,
+          'Error',
+          'Failed to save behavior report.',
+          Icons.error,
+          Colors.red,
+        );
       }
     } catch (e) {
       print('Error: $e');
+      await showCustomDialog(
+        context,
+        'Error',
+        'An error occurred: $e',
+        Icons.error,
+        Colors.red,
+      );
     }
   }
 
-  // Function to calculate age from date of birth
-  String _calculateAge(String dateOfBirth) {
-    try {
-      DateTime dob = DateFormat("dd/MM/yyyy").parse(dateOfBirth);
-      DateTime today = DateTime.now();
-      int age = today.year - dob.year;
-      if (today.month < dob.month ||
-          (today.month == dob.month && today.day < dob.day)) {
-        age--;
-      }
-      return age.toString();
-    } catch (e) {
-      print("Error parsing date of birth: $e");
-      return "Unknown";
-    }
+  Future<void> showCustomDialog(BuildContext context, String title,
+      String message, IconData icon, Color iconColor) async {
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20.0),
+          ),
+          title: Row(
+            children: [
+              Icon(icon, color: iconColor),
+              SizedBox(width: 10),
+              Text(title),
+            ],
+          ),
+          content: Text(message),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: Text('OK', style: TextStyle(color: iconColor)),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -188,23 +230,23 @@ class _CaregiverBehaviourState extends State<CaregiverBehaviour> {
               hint: const Text(
                 "Select Child ",
                 style: TextStyle(
-                  color: Colors.pink, // Pink text color
+                  color: Colors.pink,
                 ),
               ),
               value: selectedChild?.childName,
               icon: const Icon(
-                Icons.arrow_drop_down, // Arrow icon
-                color: Colors.pink, // Pink color
+                Icons.arrow_drop_down,
+                color: Colors.pink,
               ),
               elevation: 4,
               style: const TextStyle(
-                color: Colors.pink, // Pink text color
+                color: Colors.pink,
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),
               underline: Container(
                 height: 2,
-                color: Colors.pink, // Pink underline
+                color: Colors.pink,
               ),
               items: childrenList.map<DropdownMenuItem<String>>((child) {
                 return DropdownMenuItem<String>(
@@ -212,7 +254,7 @@ class _CaregiverBehaviourState extends State<CaregiverBehaviour> {
                   child: Text(
                     child.childName,
                     style: const TextStyle(
-                      color: Colors.black, // Black text color
+                      color: Colors.black,
                     ),
                   ),
                 );
@@ -226,30 +268,23 @@ class _CaregiverBehaviourState extends State<CaregiverBehaviour> {
             ),
             if (selectedChild != null) ...[
               const SizedBox(height: 10),
-              Text(
-                "Child Age: ${_calculateAge(selectedChild!.childDOB)}",
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
             ],
             const SizedBox(height: 10),
             DropdownButtonFormField<String>(
               hint: const Text(
                 "Select Emotion",
                 style: TextStyle(
-                  color: Colors.pink, // Pink text color
+                  color: Colors.pink,
                 ),
               ),
               value: type,
               icon: const Icon(
-                Icons.arrow_drop_down, // Arrow icon
-                color: Colors.pink, // Pink color
+                Icons.arrow_drop_down,
+                color: Colors.pink,
               ),
               elevation: 4,
               style: const TextStyle(
-                color: Colors.pink, // Pink text color
+                color: Colors.pink,
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),
@@ -269,7 +304,7 @@ class _CaregiverBehaviourState extends State<CaregiverBehaviour> {
                   child: Text(
                     emotion,
                     style: const TextStyle(
-                      color: Colors.black, // Black text color
+                      color: Colors.black,
                     ),
                   ),
                 );

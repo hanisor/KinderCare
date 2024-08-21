@@ -165,8 +165,13 @@ class _CaregiverPerformanceReportState
             : ListView.builder(
                 itemCount: performanceByMonthAndAge.keys.length,
                 itemBuilder: (context, index) {
-                  final monthYear =
-                      performanceByMonthAndAge.keys.elementAt(index);
+                  // Sort the keys (monthYear) in reverse order to display the latest month first
+                  final sortedKeys = performanceByMonthAndAge.keys.toList()
+                    ..sort((a, b) => DateFormat('MMMM yyyy')
+                        .parse(b)
+                        .compareTo(DateFormat('MMMM yyyy').parse(a)));
+
+                  final monthYear = sortedKeys[index];
                   final performancesByAge =
                       performanceByMonthAndAge[monthYear] ?? {};
 
@@ -261,7 +266,6 @@ class _CaregiverPerformanceReportState
                                                   padding: const EdgeInsets
                                                       .symmetric(
                                                       horizontal: 16.0),
-                                                  
                                                 ),
                                                 ...performancesOnDate
                                                     .map((performance) {

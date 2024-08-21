@@ -209,7 +209,7 @@ class _ParentPerformanceState extends State<ParentPerformance>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Parent Performance'),
+        title: const Text('Children Performance Report'),
         bottom: TabBar(
           controller: _tabController,
           tabs: [
@@ -257,6 +257,17 @@ class MonthlyReportView extends StatelessWidget {
     required this.calculateAge,
   });
 
+  Widget _buildStarRating(int level) {
+    return Row(
+      children: List.generate(3, (index) {
+        return Icon(
+          index < level ? Icons.star : Icons.star_border,
+          color: Colors.amber,
+        );
+      }),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     var groupedData = groupPerformancesByMonthAndName();
@@ -302,8 +313,15 @@ class MonthlyReportView extends StatelessWidget {
                           'Skill: ${performance.skill}',
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
-                        subtitle: Text(
-                          'Level: ${performance.level}\nDate: ${performance.date}',
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Date: ${performance.date}'),
+                            _buildStarRating(
+                                int.parse(performance.level) > 3
+                                    ? 3
+                                    : int.parse(performance.level)), // Ensure max 3 stars
+                          ],
                         ),
                       );
                     }).toList(),
@@ -317,6 +335,7 @@ class MonthlyReportView extends StatelessWidget {
     );
   }
 }
+
 
 class SixMonthReportView extends StatelessWidget {
   final List<ChildModel> childrenList;
@@ -381,11 +400,11 @@ class SixMonthReportView extends StatelessWidget {
                 String skill = entry.key;
                 Map<int, double> monthlyLevels = entry.value;
 
-                List<PerformanceData> chartData = monthlyLevels.entries.map((entry) {
-                  int month = entry.key;
-                  double level = entry.value;
-                  return PerformanceData(month.toString(), level);
-                }).toList();
+                // Sort the monthly levels by month (key) in ascending order
+                List<PerformanceData> chartData = monthlyLevels.entries
+                    .map((entry) => PerformanceData(entry.key.toString(), entry.value))
+                    .toList()
+                  ..sort((a, b) => int.parse(a.month).compareTo(int.parse(b.month)));
 
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -432,6 +451,7 @@ class SixMonthReportView extends StatelessWidget {
     );
   }
 }
+
 
 class PerformanceData {
   final String month;

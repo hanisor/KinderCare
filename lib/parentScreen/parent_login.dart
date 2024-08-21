@@ -4,7 +4,7 @@ import 'package:kindercare/caregiverScreen/caregiver_login.dart';
 import 'package:kindercare/parentScreen/parent_homepage.dart';
 import 'package:kindercare/request_controller.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../caregiverScreen/forgot_password.dart';
+import '../forgotPassword/forgot_password.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 
 class ParentLogin extends StatefulWidget {
@@ -164,7 +164,7 @@ class _ParentLoginState extends State<ParentLogin> {
                       Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => ForgotPassword()));
+                              builder: (context) => ForgotPwd()));
                     },
                     child: const Text("Forgot Password?", style: TextStyle(color: Colors.pinkAccent)),
                   ),

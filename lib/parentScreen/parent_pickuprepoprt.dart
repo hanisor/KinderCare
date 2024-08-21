@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:kindercare/model/childRelative_model.dart';
+import 'package:kindercare/model/relative_model.dart';
 import 'package:kindercare/parentScreen/parent_pickup.dart';
 import 'package:kindercare/request_controller.dart';
 
@@ -63,6 +64,111 @@ class _ParentPickupReportState extends State<ParentPickupReport> {
     }
   }
 
+  Future<void> showDeleteConfirmationDialog(
+    BuildContext context, int? relativeId) async {
+  return showDialog<void>(
+    context: context,
+    barrierDismissible: false,
+    builder: (BuildContext dialogContext) {
+      return AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.0),
+        ),
+        title: Row(
+          children: [
+            Icon(Icons.help_outline, color: Colors.pinkAccent, size: 28),
+            SizedBox(width: 8),
+            Text(
+              'Are You Sure?',
+              style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 22,
+                  color: Colors.pinkAccent),
+            ),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: ListBody(
+            children: <Widget>[
+              Text(
+                'Do you really want to remove this relative?',
+                style: TextStyle(fontSize: 18, color: Colors.black87),
+              ),
+              SizedBox(height: 10),
+              Text(
+                'We’ll miss them!',
+                style: TextStyle(
+                  color: Colors.pinkAccent,
+                  fontSize: 16,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+              SizedBox(height: 20),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.pinkAccent.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    Icon(Icons.delete_forever,
+                        color: Colors.pinkAccent, size: 28),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'This action can’t be undone.',
+                        style: TextStyle(
+                            color: Colors.pinkAccent,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: <Widget>[
+          TextButton(
+            child: Text(
+              'Keep',
+              style: TextStyle(fontSize: 18, color: Colors.blue),
+            ),
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+            },
+          ),
+          ElevatedButton(
+            onPressed: () {
+              softDeleteRelative(relativeId);
+              Navigator.of(dialogContext).pop();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.pinkAccent,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Text(
+                'Remove',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    },
+  );
+}
+
+
   @override
   void initState() {
     super.initState();
@@ -81,7 +187,7 @@ class _ParentPickupReportState extends State<ParentPickupReport> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Pickup Report '),
+        title: const Text('Pickup Report'),
       ),
       body: RefreshIndicator(
         onRefresh: fetchRelative,
@@ -124,7 +230,6 @@ class _ParentPickupReportState extends State<ParentPickupReport> {
                         const SizedBox(height: 20),
                         ElevatedButton(
                           onPressed: () {
-                            print("parentidd: ${widget.parentId}");
                             Navigator.push(
                               context,
                               MaterialPageRoute(
@@ -143,6 +248,7 @@ class _ParentPickupReportState extends State<ParentPickupReport> {
                     children: childrenByRelativeId.entries.map((entry) {
                       List<ChildRelativeModel> children = entry.value;
                       var relative = children.first.relativeModel;
+
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -180,16 +286,16 @@ class _ParentPickupReportState extends State<ParentPickupReport> {
                           const SizedBox(height: 20),
                           ElevatedButton(
                             onPressed: () {
-                              softDeleteRelative(relative?.relativeId);
+                              showDeleteConfirmationDialog(
+                                  context, relative?.relativeId);
                             },
                             style: ElevatedButton.styleFrom(
-                                backgroundColor:
-                                    Color.fromARGB(255, 255, 7, 148)),
+                              backgroundColor: Colors.red,
+                            ),
                             child: const Text(
                               'Delete Report',
                               style: TextStyle(
-                                color: Color.fromARGB(
-                                    255, 255, 255, 255), // Custom font color
+                                color: Colors.white,
                               ),
                             ),
                           ),

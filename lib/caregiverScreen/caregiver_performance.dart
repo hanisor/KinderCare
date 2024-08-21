@@ -84,132 +84,225 @@ class _CaregiverPerformanceState extends State<CaregiverPerformance> {
   }
 
   Future<int?> fetchGroupId(int caregiverId) async {
-  try {
-    RequestController req = RequestController(path: 'get-group');
-    req.setBody({"caregiver_id": caregiverId});
-    await req.post();
-    var response = req.result();
-    if (response != null && response.containsKey('group_id')) {
-      return response['group_id'] as int;
-    } else {
-      print("Failed to fetch group ID");
+    try {
+      RequestController req = RequestController(path: 'get-group');
+      req.setBody({"caregiver_id": caregiverId});
+      await req.post();
+      var response = req.result();
+      if (response != null && response.containsKey('group_id')) {
+        return response['group_id'] as int;
+      } else {
+        print("Failed to fetch group ID");
+        return null;
+      }
+    } catch (e) {
+      print("Error during network request: $e");
       return null;
     }
-  } catch (e) {
-    print("Error during network request: $e");
-    return null;
   }
-}
-
 
   Future<void> getChildrenData(int groupId) async {
-  print("Fetching children data for groupId: $groupId"); // Debugging line
+    print("Fetching children data for groupId: $groupId"); // Debugging line
 
-  try {
-    RequestController req = RequestController(path: 'child-group/caregiverId/$groupId');
-    await req.get();
-    var response = req.result();
-    print("Request result: $response"); // Print the response to see its type
+    try {
+      RequestController req =
+          RequestController(path: 'child-group/caregiverId/$groupId');
+      await req.get();
+      var response = req.result();
+      print("Request result: $response"); // Print the response to see its type
 
-    if (response != null && response.containsKey('group')) {
-      setState(() {
-        var childrenData = response['group'];
-        print("Children Data: $childrenData"); // Debugging line
+      if (response != null && response.containsKey('group')) {
+        setState(() {
+          var childrenData = response['group'];
+          print("Children Data: $childrenData"); // Debugging line
 
-        if (childrenData is List) {
-          List<ChildModel> allChildrenList = List<ChildModel>.from(childrenData.map((x) => ChildModel(
-                childId: int.tryParse(x['id']?.toString() ?? '0') ?? 0,
-                childName: x['name'] as String? ?? '',
-                childDOB: x['date_of_birth'] as String? ?? '',
-                childGender: x['gender'] as String? ?? '',
-                childMykidNumber: x['my_kid_number'] as String? ?? '',
-                childAllergies: x['allergy'] as String? ?? '',
-                childStatus: x['status'] as String? ?? '',
-                parentId: int.tryParse(x['guardian_id']?.toString() ?? '0') ?? 0,
-                performances: x['performances'] != null && x['performances'] is List
-                    ? List<PerformanceModel>.from((x['performances'] as List).map((e) => PerformanceModel.fromJson(e as Map<String, dynamic>)))
-                    : [],
-              )));
+          if (childrenData is List) {
+            List<ChildModel> allChildrenList =
+                List<ChildModel>.from(childrenData.map((x) => ChildModel(
+                      childId: int.tryParse(x['id']?.toString() ?? '0') ?? 0,
+                      childName: x['name'] as String? ?? '',
+                      childDOB: x['date_of_birth'] as String? ?? '',
+                      childGender: x['gender'] as String? ?? '',
+                      childMykidNumber: x['my_kid_number'] as String? ?? '',
+                      childAllergies: x['allergy'] as String? ?? '',
+                      childStatus: x['status'] as String? ?? '',
+                      parentId:
+                          int.tryParse(x['guardian_id']?.toString() ?? '0') ??
+                              0,
+                      performances:
+                          x['performances'] != null && x['performances'] is List
+                              ? List<PerformanceModel>.from(
+                                  (x['performances'] as List).map((e) =>
+                                      PerformanceModel.fromJson(
+                                          e as Map<String, dynamic>)))
+                              : [],
+                    )));
 
-          // Group children by age
-          childrenByAge.clear();
-          allChildrenList.forEach((child) {
-            try {
-              DateTime? dob = parseDate(child.childDOB);
-              if (dob != null) {
-                int age = _calculateAge(child.childDOB); // Calculate age here
-                if (!childrenByAge.containsKey(age)) {
-                  childrenByAge[age] = [];
+            // Group children by age
+            childrenByAge.clear();
+            allChildrenList.forEach((child) {
+              try {
+                DateTime? dob = parseDate(child.childDOB);
+                if (dob != null) {
+                  int age = _calculateAge(child.childDOB); // Calculate age here
+                  if (!childrenByAge.containsKey(age)) {
+                    childrenByAge[age] = [];
+                  }
+                  childrenByAge[age]!.add(child);
                 }
-                childrenByAge[age]!.add(child);
+              } catch (e) {
+                print(
+                    "Invalid date format for child: ${child.childName}, DOB: ${child.childDOB}"); // Debugging line
               }
-            } catch (e) {
-              print("Invalid date format for child: ${child.childName}, DOB: ${child.childDOB}"); // Debugging line
-            }
-          });
+            });
 
-          // Debugging lines
-          childrenByAge.forEach((age, children) {
-            print('Age $age: ${children.map((c) => c.childName).toList()}');
-          });
-        } else {
-          print("Invalid children data format"); // Debugging line
-        }
-      });
-    } else {
-      print("Failed to fetch children data or key 'child_group' not found"); // Debugging line
+            // Debugging lines
+            childrenByAge.forEach((age, children) {
+              print('Age $age: ${children.map((c) => c.childName).toList()}');
+            });
+          } else {
+            print("Invalid children data format"); // Debugging line
+          }
+        });
+      } else {
+        print(
+            "Failed to fetch children data or key 'child_group' not found"); // Debugging line
+      }
+    } catch (e) {
+      print("Error during network request: $e");
     }
-  } catch (e) {
-    print("Error during network request: $e");
   }
-}
-
 
   // Method to add performance
   Future<void> addPerformance() async {
-    try {
-      if (date == null || selectedChild == null) {
-        return;
-      }
+  try {
+    if (date == null || selectedChild == null) {
+      return;
+    }
 
-      RequestController req = RequestController(path: 'add-performance');
+    RequestController req = RequestController(path: 'add-performance');
+    String formattedDate = DateFormat('yyyy-MM-dd').format(date!);
+    bool isSuccessful = true;
 
-      // Format the DateTime object into a string
-      String formattedDate = DateFormat('yyyy-MM-dd').format(date!);
+    for (var entry in skillLevels.entries) {
+      String skill = entry.key;
+      int? level = entry.value;
 
-      // Iterate through the map to add each skill, level, date, and child ID
-      for (var entry in skillLevels.entries) {
-        String skill = entry.key;
-        int? level = entry.value;
+      if (level != null) {
+        req.setBody({
+          "skill": skill,
+          "level": level.toString(),
+          "date": formattedDate,
+          "child_id": selectedChild!.childId.toString(),
+        });
 
-        if (level != null) {
-          req.setBody({
-            "skill": skill,
-            "level": level.toString(),
-            "date": formattedDate,
-            "child_id": selectedChild!.childId.toString(),
-          });
+        var response = await req.post();
 
-          var response = await req.post();
-
-          if (response.statusCode == 200) {
-            var result = req.result();
-
-            if (result != null) {
-              print('Performance data saved successfully');
-            } else {
-              print('Error saving performance data');
-            }
-          } else {
-            print(
-                'Error: HTTP request failed with status code ${response.statusCode}');
-          }
+        if (response.statusCode != 200 || req.result() == null) {
+          isSuccessful = false;
+          break; // Exit the loop if any request fails
         }
       }
-    } catch (e) {
-      print('Error: $e');
     }
+
+    // Show a single dialog after processing all skills
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16.0),
+          ),
+          title: Row(
+            children: [
+              Icon(
+                isSuccessful ? Icons.check_circle : Icons.error,
+                color: isSuccessful ? Colors.green : Colors.red,
+              ),
+              SizedBox(width: 8),
+              Text(
+                isSuccessful ? 'Success!' : 'Oops!',
+                style: TextStyle(
+                  color: isSuccessful ? Colors.green : Colors.red,
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            isSuccessful
+                ? 'The performance data has been successfully saved! 🌟\n\nLet\'s take a look at the performance report!'
+                : 'Something went wrong while saving the performance data. 😔\n\nNo worries, let\'s try that again and make sure everything is perfect!',
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text(
+                'Got it!',
+                style: TextStyle(color: Colors.pink),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+            ),
+          ],
+        );
+      },
+    );
+
+    // After the dialog is dismissed, push the next page
+    if (isSuccessful) {
+      await Future.delayed(Duration(seconds: 2));
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => CaregiverPerformanceReport(
+            caregiverId: widget.caregiverId,
+          ),
+        ),
+      );
+    }
+  } catch (e) {
+    // Show error dialog for exception
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16.0),
+          ),
+          title: Row(
+            children: [
+              Icon(
+                Icons.error,
+                color: Colors.red,
+              ),
+              SizedBox(width: 8),
+              Text(
+                'Error!',
+                style: TextStyle(color: Colors.red),
+              ),
+            ],
+          ),
+          content: Text(
+            'An unexpected error occurred: $e.\n\nBut don\'t worry, we\'ll fix this in no time! Let\'s give it another shot. 💪',
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text(
+                'OK',
+                style: TextStyle(color: Colors.pink),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
+}
+
+
 
   Widget buildSkillsCard() {
     if (selectedChild == null) {
@@ -340,18 +433,17 @@ class _CaregiverPerformanceState extends State<CaregiverPerformance> {
     );
   }
 
- @override
-void initState() {
-  super.initState();
-  fetchGroupId(widget.caregiverId!).then((groupId) {
-    if (groupId != null) {
-      getChildrenData(groupId);
-    } else {
-      print("Failed to get group ID for caregiver");
-    }
-  });
-}
-
+  @override
+  void initState() {
+    super.initState();
+    fetchGroupId(widget.caregiverId!).then((groupId) {
+      if (groupId != null) {
+        getChildrenData(groupId);
+      } else {
+        print("Failed to get group ID for caregiver");
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -410,7 +502,8 @@ void initState() {
                     setState(() {
                       selectedAge = newValue;
                       childrenList = childrenByAge[newValue] ?? [];
-                      selectedChild = null; // Reset the selected child when age group changes
+                      selectedChild =
+                          null; // Reset the selected child when age group changes
                     });
                   },
                   value: selectedAge, // Display the selected age
@@ -449,12 +542,7 @@ void initState() {
                     if (_formKey.currentState!.validate()) {
                       _formKey.currentState!.save();
                       addPerformance();
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => CaregiverPerformanceReport(
-                                caregiverId: widget.caregiverId)),
-                      );
+                      
                     }
                   },
                   child: Text('Add Performance'),

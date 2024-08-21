@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get/get_navigation/src/root/get_material_app.dart';
+import 'package:kindercare/forgotPassword/forgot_password_service.dart';
+import 'package:kindercare/forgotPassword/forgot_pwd_bloc.dart';
 import 'package:kindercare/model/attendance_model.dart';
 import 'package:kindercare/splash_screen.dart';
 import 'package:provider/provider.dart';
@@ -22,9 +25,12 @@ Future<void> main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => AttendanceModel()),
       ],
-      child: const MyApp(),
+      child: BlocProvider(
+        create: (context) => ForgotPwdBloc(ForgotPasswordService()),
+        child: const MyApp(),
+      ),
     ),
-  );
+  );  
 }
 
 class MyApp extends StatelessWidget {

@@ -27,43 +27,57 @@ class _CaregiverBehaviourReportState extends State<CaregiverBehaviourReport> {
   }
 
   Future<void> fetchChildBehavioursByCaregiverId() async {
-    try {
-      RequestController req =
-          RequestController(path: 'behaviour/${widget.caregiverId}');
-      await req.get();
-      var response = req.result();
+  try {
+    RequestController req =
+        RequestController(path: 'behaviour/${widget.caregiverId}');
+    await req.get();
+    var response = req.result();
 
-      if (response != null) {
-        if (response is Map<String, dynamic>) {
-          final responseData = response as Map<String, dynamic>;
-          final childGroup = responseData['child_group'];
+    if (response != null) {
+      if (response is Map<String, dynamic>) {
+        final responseData = response as Map<String, dynamic>;
+        final childGroup = responseData['child_group'];
 
-          setState(() {
-            behaviourList.clear();
-            groupedBehaviourMap.clear();
+        setState(() {
+          behaviourList.clear();
+          groupedBehaviourMap.clear();
 
-            childGroup.forEach((childGroupItem) {
-              final child = childGroupItem['child'];
-              final behaviours = child['behaviours'];
-              final childModel = ChildModel.fromJson(child);
+          childGroup.forEach((childGroupItem) {
+            final child = childGroupItem['child'];
+            final behaviours = child['behaviours'];
+            final childModel = ChildModel.fromJson(child);
 
-              behaviours.forEach((behaviour) {
-                BehaviourModel behaviourModel =
-                    BehaviourModel.fromJson(behaviour, childModel: childModel);
+            behaviours.forEach((behaviour) {
+              BehaviourModel behaviourModel =
+                  BehaviourModel.fromJson(behaviour, childModel: childModel);
 
-                String date = DateFormat('yyyy-MM-dd')
-                    .format(DateTime.parse(behaviourModel.dateTime));
-                String month = DateFormat('yyyy-MM')
-                    .format(DateTime.parse(behaviourModel.dateTime));
-                final dateOfBirthString = child['date_of_birth'];
-                if (dateOfBirthString != null) {
+              String date = DateFormat('yyyy-MM-dd')
+                  .format(DateTime.parse(behaviourModel.dateTime));
+              String month = DateFormat('yyyy-MM')
+                  .format(DateTime.parse(behaviourModel.dateTime));
+              final dateOfBirthString = child['date_of_birth'];
+              if (dateOfBirthString != null) {
+                try {
+                  final dob = DateFormat('yyyy-MM-dd').parse(dateOfBirthString);
+                  final now = DateTime.now();
+                  final age = now.year - dob.year;
+
+                  if (groupedBehaviourMap[month] == null) {
+                    groupedBehaviourMap[month] = {};
+                  }
+                  if (groupedBehaviourMap[month]![date] == null) {
+                    groupedBehaviourMap[month]![date] = {};
+                  }
+                  if (groupedBehaviourMap[month]![date]![age] == null) {
+                    groupedBehaviourMap[month]![date]![age] = [];
+                  }
+                  groupedBehaviourMap[month]![date]![age]!
+                      .add(behaviourModel);
+                } catch (_) {
                   try {
-                    final dob =
-                        DateFormat('yyyy-MM-dd').parse(dateOfBirthString);
+                    final dob = DateFormat('MM/dd/yyyy').parse(dateOfBirthString);
                     final now = DateTime.now();
-                    final age = now.year -
-                        dob.year -
-                        (now.month >= dob.month && now.day >= dob.day ? 0 : 1);
+                    final age = now.year - dob.year;
 
                     if (groupedBehaviourMap[month] == null) {
                       groupedBehaviourMap[month] = {};
@@ -76,47 +90,25 @@ class _CaregiverBehaviourReportState extends State<CaregiverBehaviourReport> {
                     }
                     groupedBehaviourMap[month]![date]![age]!
                         .add(behaviourModel);
-                  } catch (_) {
-                    try {
-                      final dob =
-                          DateFormat('MM/dd/yyyy').parse(dateOfBirthString);
-                      final now = DateTime.now();
-                      final age = now.year -
-                          dob.year -
-                          (now.month >= dob.month && now.day >= dob.day
-                              ? 0
-                              : 1);
-
-                      if (groupedBehaviourMap[month] == null) {
-                        groupedBehaviourMap[month] = {};
-                      }
-                      if (groupedBehaviourMap[month]![date] == null) {
-                        groupedBehaviourMap[month]![date] = {};
-                      }
-                      if (groupedBehaviourMap[month]![date]![age] == null) {
-                        groupedBehaviourMap[month]![date]![age] = [];
-                      }
-                      groupedBehaviourMap[month]![date]![age]!
-                          .add(behaviourModel);
-                    } catch (error) {
-                      print('Invalid date of birth format: $dateOfBirthString');
-                    }
+                  } catch (error) {
+                    print('Invalid date of birth format: $dateOfBirthString');
                   }
                 }
-              });
+              }
             });
           });
-        } else {
-          print(
-              'Failed to fetch child groups and behaviours: ${response.toString()}');
-        }
+        });
       } else {
-        print('No response received');
+        print(
+            'Failed to fetch child groups and behaviours: ${response.toString()}');
       }
-    } catch (error) {
-      print('Failed to fetch child groups and behaviours: $error');
+    } else {
+      print('No response received');
     }
+  } catch (error) {
+    print('Failed to fetch child groups and behaviours: $error');
   }
+}
 
   @override
   Widget build(BuildContext context) {

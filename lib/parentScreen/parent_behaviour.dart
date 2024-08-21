@@ -17,21 +17,21 @@ class _ParentBehaviourState extends State<ParentBehaviour> {
   List<ChildModel> childrenList = [];
   List<BehaviourModel> behaviourList = [];
 
-  // Summary data for first tab
+  // Summary data for the first tab
   Map<String, Map<String, Map<String, int>>> summaryBehaviourMap = {};
 
-  // Grouped data for second tab
+  // Grouped data for the detailed tab
   Map<String, Map<String, Map<String, List<BehaviourModel>>>> groupedBehaviourMap = {};
+  String selectedMonthYear = '';
+  List<String> availableMonths = [];
 
   Future<void> getChildrenData() async {
     RequestController req = RequestController(path: 'child/by-guardianId/${widget.parentId}');
     await req.get();
     var response = req.result();
-    print("req result : $response"); // Print the response to see its type
     if (response != null && response.containsKey('children')) {
       setState(() {
         var childrenData = response['children'];
-        print("Children Data: $childrenData"); // Debugging line
         if (childrenData is List) {
           childrenList = List<ChildModel>.from(childrenData.map((x) => ChildModel(
                 childId: int.tryParse(x['id'].toString()),
@@ -44,29 +44,19 @@ class _ParentBehaviourState extends State<ParentBehaviour> {
                 parentId: widget.parentId,
                 performances: [],
               )));
-        } else {
-          print("Invalid children data format"); // Debugging line
         }
       });
       await fetchBehaviours();
-    } else {
-      print("Failed to fetch children data"); // Debugging line
     }
-    print("childrenList : $childrenList");
   }
 
   Future<void> fetchBehaviours() async {
     for (var child in childrenList) {
       RequestController req = RequestController(path: 'behaviour/by-childId/${child.childId}');
-      print("child.childId : ${child.childId}");
-
       await req.get();
       var response = req.result();
-      print("req result : $response"); // Print the response to see its type
       if (response != null && response.containsKey('behaviours')) {
         var behaviourData = response['behaviours'];
-        print("behaviour Data: $behaviourData"); // Print behaviour data for debugging
-
         setState(() {
           behaviourList.addAll(List<BehaviourModel>.from(behaviourData.map((x) {
             x['id'] = int.tryParse(x['id'].toString());
@@ -77,6 +67,7 @@ class _ParentBehaviourState extends State<ParentBehaviour> {
     }
     _summarizeBehaviours();
     _groupBehavioursByMonthDayAndName();
+    _populateAvailableMonths();
   }
 
   void _summarizeBehaviours() {
@@ -108,31 +99,11 @@ class _ParentBehaviourState extends State<ParentBehaviour> {
     groupedBehaviourMap.clear();
 
     for (var behaviour in behaviourList) {
-      DateTime behaviourDate;
-      try {
-        behaviourDate = DateTime.parse(behaviour.dateTime);
-      } catch (e) {
-        print("Invalid behaviour date format: ${behaviour.dateTime}");
-        continue;
-      }
+      DateTime behaviourDate = DateTime.parse(behaviour.dateTime);
       String monthYear = DateFormat('yyyy-MM').format(behaviourDate);
       String day = DateFormat('yyyy-MM-dd').format(behaviourDate);
-      ChildModel child;
-      try {
-        child = childrenList.firstWhere((child) => child.childId == behaviour.childId);
-      } catch (e) {
-        print("Child not found for behaviour: ${behaviour.childId}");
-        continue;
-      }
+      ChildModel child = childrenList.firstWhere((child) => child.childId == behaviour.childId);
       String childName = child.childName;
-      String childDOB = child.childDOB;
-      int childAge;
-      try {
-        childAge = _calculateAge(childDOB);
-      } catch (e) {
-        print("Invalid child DOB format: $childDOB");
-        continue;
-      }
 
       if (!groupedBehaviourMap.containsKey(monthYear)) {
         groupedBehaviourMap[monthYear] = {};
@@ -148,21 +119,16 @@ class _ParentBehaviourState extends State<ParentBehaviour> {
     }
   }
 
-  int _calculateAge(String dateOfBirth) {
-    try {
-      DateTime dob = DateFormat("yyyy-MM-dd").parse(dateOfBirth);
-      DateTime today = DateTime.now();
-      int age = today.year - dob.year;
-      if (today.month < dob.month ||
-          (today.month == dob.month && today.day < dob.day)) {
-        age--;
-      }
-      return age;
-    } catch (e) {
-      print("Error parsing date of birth: $e");
-      return -1;
-    }
-  }
+  void _populateAvailableMonths() {
+  setState(() {
+    availableMonths = groupedBehaviourMap.keys.toList();
+    // Sort the months in descending order
+    availableMonths.sort((a, b) => b.compareTo(a));
+    // Select the most recent month
+    selectedMonthYear = availableMonths.isNotEmpty ? availableMonths.first : '';
+  });
+}
+
 
   Future<void> _refreshData() async {
     await getChildrenData();
@@ -266,79 +232,125 @@ class _ParentBehaviourState extends State<ParentBehaviour> {
   }
 
   Widget _buildDetailedTab() {
-    return RefreshIndicator(
-      onRefresh: _refreshData,
-      child: ListView.builder(
-        itemCount: groupedBehaviourMap.length,
-        itemBuilder: (BuildContext context, int index) {
-          String monthYear = groupedBehaviourMap.keys.elementAt(index);
-          Map<String, Map<String, List<BehaviourModel>>> dayGroupMap = groupedBehaviourMap[monthYear]!;
-          return Padding(
+    return Column(
+      children: [
+        if (availableMonths.isNotEmpty)
+          Padding(
             padding: const EdgeInsets.all(8.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  DateFormat('MMMM yyyy').format(DateTime.parse(monthYear + '-01')),
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-                ),
-                ...dayGroupMap.entries.map((dayEntry) {
-                  String day = dayEntry.key;
-                  Map<String, List<BehaviourModel>> childGroupMap = dayEntry.value;
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: Card(
-                      color: Colors.blue[50],
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15.0),
-                      ),
-                      child: ExpansionTile(
-                        title: Text(
-                          DateFormat('dd MMM yyyy').format(DateTime.parse(day)),
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        children: [
-                          ...childGroupMap.entries.map((childEntry) {
-                            String childName = childEntry.key;
-                            List<BehaviourModel> behaviours = childEntry.value;
-                            return Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    childName,
-                                    style: TextStyle(fontWeight: FontWeight.bold),
-                                  ),
-                                  SizedBox(height: 10),
-                                  ...behaviours.map((behaviour) {
-                                    return Padding(
-                                      padding: const EdgeInsets.symmetric(vertical: 4.0),
-                                      child: Card(
-                                        color: Colors.white,
-                                        child: ListTile(
-                                          title: Text(behaviour.type),
-                                          subtitle: Text(behaviour.description),
-                                        ),
-                                      ),
-                                    );
-                                  }).toList(),
-                                ],
-                              ),
-                            );
-                          }).toList(),
-                        ],
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ],
+            child: DropdownButton<String>(
+              value: selectedMonthYear,
+              items: availableMonths.map((String monthYear) {
+                return DropdownMenuItem<String>(
+                  value: monthYear,
+                  child: Text(DateFormat('MMMM yyyy').format(DateTime.parse(monthYear + '-01'))),
+                );
+              }).toList(),
+              onChanged: (newValue) {
+                setState(() {
+                  selectedMonthYear = newValue!;
+                });
+              },
             ),
-          );
-        },
-      ),
+          ),
+        Expanded(
+          child: _buildBehaviourTable(),
+        ),
+      ],
     );
   }
+
+  Widget _buildBehaviourTable() {
+  if (selectedMonthYear.isEmpty) {
+    return Center(child: Text('No data available for the selected month.'));
+  }
+
+  Map<String, Map<String, List<BehaviourModel>>>? dailyMap = groupedBehaviourMap[selectedMonthYear];
+
+  if (dailyMap == null || dailyMap.isEmpty) {
+    return Center(child: Text('No data available for the selected month.'));
+  }
+
+  // Get all the days in the selected month
+  DateTime firstDayOfMonth = DateTime.parse(selectedMonthYear + '-01');
+  DateTime lastDayOfMonth = DateTime(firstDayOfMonth.year, firstDayOfMonth.month + 1, 0);
+  List<String> allDays = List.generate(lastDayOfMonth.day, (index) {
+    return DateFormat('yyyy-MM-dd').format(DateTime(firstDayOfMonth.year, firstDayOfMonth.month, index + 1));
+  });
+
+  return SingleChildScrollView(
+    scrollDirection: Axis.horizontal,
+    child: SingleChildScrollView(
+      child: Table(
+        border: TableBorder.all(color: Colors.grey),
+        columnWidths: const {
+          0: FixedColumnWidth(150.0), // Date column width
+          1: FixedColumnWidth(150.0), // Type column width
+          2: FixedColumnWidth(250.0), // Description column width
+        },
+        children: [
+          TableRow(
+            decoration: BoxDecoration(color: Colors.green[100]),
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text('Date', style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text('Type', style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text('Description', style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+          for (String day in allDays) ...[
+            if (dailyMap.containsKey(day) && dailyMap[day]!.isNotEmpty)
+              for (var entry in dailyMap[day]!.entries) ...[
+                for (var behaviour in entry.value) 
+                  TableRow(
+                    decoration: BoxDecoration(color: Colors.green[50]), // Highlight for records
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(DateFormat('dd MMMM yyyy').format(DateTime.parse(day))),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(behaviour.type),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(behaviour.description),
+                      ),
+                    ],
+                  ),
+              ]
+            else
+              TableRow(
+                decoration: BoxDecoration(color: Colors.red[50]), // Subtle difference for no records
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(DateFormat('dd MMMM yyyy').format(DateTime.parse(day))),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text('No Record', style: TextStyle(color: Colors.red)),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text('No Record', style: TextStyle(color: Colors.red)),
+                  ),
+                ],
+              ),
+          ],
+        ],
+      ),
+    ),
+  );
+}
 
   List<BehaviourTypeCount> _createSampleData(Map<String, int> typeGroupMap) {
     return typeGroupMap.entries
