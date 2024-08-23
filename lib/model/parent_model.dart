@@ -5,7 +5,7 @@ class ParentModel {
   final String parentICNumber;
   final String parentEmail;
   final String parentUsername;
-  final String parentPassword;
+  String? parentPassword;
   final String parentRole;
   final String parentStatus;
 
@@ -16,7 +16,7 @@ class ParentModel {
     required this.parentICNumber,
     required this.parentEmail,
     required this.parentUsername,
-    required this.parentPassword,
+    this.parentPassword,
     required this.parentRole,
     required this.parentStatus,
   });
@@ -30,7 +30,7 @@ class ParentModel {
       parentICNumber: json['ic_number'] as String,
       parentEmail: json['email'] as String,
       parentUsername: json['username'] as String,
-      parentPassword: json['password'] as String,
+      parentPassword: json['password'] as String?,
       parentRole: json['role'] as String, 
       parentStatus: json['status'] as String,
     );
@@ -50,7 +50,7 @@ class ParentModel {
 
   String get getParentUsername => parentUsername;
 
-  String get getParentPassword => parentPassword;
+  String? get getParentPassword => parentPassword;
 
   String get getParentRole => parentRole;
 

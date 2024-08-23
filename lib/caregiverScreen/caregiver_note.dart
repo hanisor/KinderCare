@@ -12,14 +12,27 @@ class CaregiverNote extends StatefulWidget {
   State<CaregiverNote> createState() => _CaregiverNoteState();
 }
 
-class _CaregiverNoteState extends State<CaregiverNote> {
+class _CaregiverNoteState extends State<CaregiverNote> with SingleTickerProviderStateMixin {
   TextEditingController noteDetailsController = TextEditingController();
   String status = "UNREAD";
   String senderType = "caregiver";
   DateTime? dateTime;
-  List<NoteModel> noteList = []; // List to hold checklist items
-  ParentModel? selectedParent; // Initialize selectedChild
+  List<NoteModel> noteList = []; // List to hold all notes
+  List<NoteModel> filteredNoteList = []; // List to hold filtered notes by caregiver ID
+  List<NoteModel> todayNotes = [];
+  ParentModel? selectedParent;
   List<ParentModel> parentList = [];
+  String? selectedMonth;
+  int? selectedDay;
+
+  late TabController _tabController;
+
+  @override
+  void dispose() {
+    noteDetailsController.dispose();
+    _tabController.dispose();
+    super.dispose();
+  }
 
   Future<void> getGuardianData() async {
     RequestController req = RequestController(path: 'guardian-data');
@@ -27,7 +40,6 @@ class _CaregiverNoteState extends State<CaregiverNote> {
     var response = req.result();
     print("req result : $response"); // Print the response to see its type
 
-    // Assuming response is a List<dynamic>
     if (response != null && response is List) {
       setState(() {
         var parentData = response;
@@ -40,27 +52,21 @@ class _CaregiverNoteState extends State<CaregiverNote> {
                   parentICNumber: x['ic_number'] as String,
                   parentEmail: x['email'] as String,
                   parentUsername: x['username'] as String,
-                  parentPassword: x['password'] as String,
+                  parentPassword: x['password'] as String?,
                   parentRole: x['role'] as String,
                   parentStatus: x['status'] as String,
                 ))
             .toList();
 
-        // Set selectedParent if the list is not empty
         if (parentList.isNotEmpty) {
           selectedParent = parentList[0];
+          fetchNotesByParentId(selectedParent!.id);
         }
       });
     } else {
       print("Failed to fetch parent data"); // Debugging line
     }
     print("[parentList] : $parentList");
-  }
-
-  @override
-  void dispose() {
-    noteDetailsController.dispose();
-    super.dispose();
   }
 
   Future<void> sendNoteTopParent() async {
@@ -72,8 +78,7 @@ class _CaregiverNoteState extends State<CaregiverNote> {
     print('Caregiver ID: ${widget.caregiverId}');
     print('parent ID: $selectedParent.id');
 
-    String formattedDateTime = DateFormat("yyyy-MM-dd HH:mm:ss")
-        .format(DateTime.parse(currentDateTime));
+    String formattedDateTime = DateFormat("yyyy-MM-dd HH:mm:ss").format(DateTime.parse(currentDateTime));
 
     RequestController req = RequestController(path: 'guardian/add-note');
 
@@ -93,8 +98,6 @@ class _CaregiverNoteState extends State<CaregiverNote> {
       print('response = $result');
       if (result != null && result.containsKey('notes')) {
         print('Checklist item saved successfully');
-        // Clear text field after successful submission
-        //noteDetailsController.clear();
         fetchNotesByParentId(selectedParent?.id);
       } else {
         print('Error saving note item: ${response.statusCode}');
@@ -104,8 +107,7 @@ class _CaregiverNoteState extends State<CaregiverNote> {
   }
 
   Future<void> fetchNotesByParentId(int? parentId) async {
-    RequestController req = RequestController(
-        path: 'note/by-guardianId/$parentId'); // Pass email as parameter
+    RequestController req = RequestController(path: 'note/by-guardianId/$parentId'); // Pass email as parameter
     print("parentId : ${selectedParent?.id}");
     await req.get();
     var response = req.result();
@@ -114,27 +116,28 @@ class _CaregiverNoteState extends State<CaregiverNote> {
       print("JSON Data: $noteData"); // Print JSON data for debugging
       setState(() {
         noteList = List<NoteModel>.from(noteData.map((x) {
-          // Ensure noteId is parsed as an integer
-          x['id'] = int.tryParse(x['id'].toString());
+          x['id'] = int.tryParse(x['id'].toString()); // Ensure noteId is parsed as an integer
           print("noteId: ${x['id']}"); // Debug noteId
           print("noteStatus: ${x['status']}"); // Debug noteStatus
           return NoteModel.fromJson(x);
         }));
 
-        // Filter notes with status "unread"
-        noteList = noteList
-            .where((note) =>
-                note.noteStatus == 'UNREAD' &&
-                note.senderType == 'caregiver' && // Filter by sender type
-                DateTime.now().difference(note.noteDateTime).inDays <= 1)
-            .toList();
+        // Filter notes by caregiver ID
+        filteredNoteList = noteList.where((note) {
+          return note.caregiverId == widget.caregiverId;
+        }).toList();
 
-        // Sort notes by date time (optional)
-        noteList.sort((a, b) => a.noteDateTime.compareTo(b.noteDateTime));
+        // Filter today's notes
+        DateTime today = DateTime.now();
+        todayNotes = filteredNoteList.where((note) {
+          return note.noteDateTime.year == today.year &&
+              note.noteDateTime.month == today.month &&
+              note.noteDateTime.day == today.day;
+        }).toList();
 
         print("Updated noteList: $noteList"); // Print updated noteList
-
-        print("Updated noteList: $noteList"); // Print updated noteList
+        print("Filtered Note List: $filteredNoteList"); // Print filtered notes list
+        print("Today's Notes: $todayNotes"); // Print today's notes
       });
     }
   }
@@ -143,13 +146,10 @@ class _CaregiverNoteState extends State<CaregiverNote> {
   void initState() {
     super.initState();
     getGuardianData();
-    if (selectedParent != null) {
-      fetchNotesByParentId(selectedParent!.id);
-    }
+    _tabController = TabController(length: 2, vsync: this);
   }
 
   Future<void> _refreshNotes() async {
-    // Fetch notes for the selected parent
     await fetchNotesByParentId(selectedParent?.id);
   }
 
@@ -160,7 +160,6 @@ class _CaregiverNoteState extends State<CaregiverNote> {
         title: Text('Notes'),
       ),
       body: RefreshIndicator(
-        // Assign onRefresh callback to trigger refresh
         onRefresh: _refreshNotes,
         child: Container(
           padding: EdgeInsets.all(16),
@@ -251,56 +250,90 @@ class _CaregiverNoteState extends State<CaregiverNote> {
                   ),
                 ],
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
+              TabBar(
+                controller: _tabController,
+                tabs: [
+                  Tab(text: 'Today\'s Notes'),
+                  Tab(text: 'All Notes'),
+                ],
+              ),
+              const SizedBox(height: 20),
               Expanded(
-                child: ListView.builder(
-                  itemCount: noteList.length,
-                  itemBuilder: (context, index) {
-                    var note = noteList.reversed.toList()[index];
-                    return Dismissible(
-                      key: UniqueKey(),
-                      onDismissed: (direction) {},
-                      background: Container(
-                        color: Colors.red,
-                        child: Icon(Icons.delete, color: Colors.white),
-                        alignment: Alignment.centerRight,
-                        padding: EdgeInsets.only(right: 16.0),
-                      ),
-                      child: Card(
-                        elevation: 4,
-                        margin:
-                            EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                        child: Padding(
-                          padding: EdgeInsets.all(16.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                note.noteDetails,
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              SizedBox(height: 8),
-                              Text(
-                                _formatDateTime(note.noteDateTime),
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                  },
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildNoteList(todayNotes),
+                    _buildNoteList(filteredNoteList),
+                  ],
                 ),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildNoteList(List<NoteModel> notes) {
+    return Container(
+      padding: EdgeInsets.all(16),
+      child: ListView.builder(
+        itemCount: notes.length,
+        itemBuilder: (context, index) {
+          var note = notes.reversed.toList()[index];
+          return Dismissible(
+            key: UniqueKey(),
+            onDismissed: (direction) {},
+            background: Container(
+              color: Colors.red,
+              child: Icon(Icons.delete, color: Colors.white),
+              alignment: Alignment.centerRight,
+              padding: EdgeInsets.only(right: 16.0),
+            ),
+            child: Card(
+              elevation: 4,
+              margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              child: Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      note.noteDetails,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          _formatDateTime(note.noteDateTime),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        Text(
+                          note.noteStatus,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: note.noteStatus == "READ"
+                                ? Colors.green
+                                : Colors.red,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }

@@ -1,4 +1,3 @@
-// lib/bloc/forgot_password/forgot_pwd_state.dart
 abstract class ForgotPwdState {}
 
 class ForgotPwdInitial extends ForgotPwdState {}

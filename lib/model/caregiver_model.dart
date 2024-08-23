@@ -5,9 +5,9 @@ class CaregiverModel {
   final String caregiverName;
   final String caregiverPhoneNumber;
   final String caregiverICNumber;
-  final String caregiverEmail;
+  final String? caregiverEmail;
   final String caregiverUsername;
-  final String caregiverPassword;
+  final String? caregiverPassword;
   final String caregiverRole;
   final String caregiverStatus;
   List<ChildModel>? children;
@@ -19,7 +19,7 @@ class CaregiverModel {
     required this.caregiverICNumber,
     required this.caregiverEmail,
     required this.caregiverUsername,
-    required this.caregiverPassword,
+    this.caregiverPassword,
     required this.caregiverRole,
     required this.caregiverStatus,
     this.children,
@@ -37,7 +37,7 @@ class CaregiverModel {
       caregiverICNumber: json['ic_number'],
       caregiverEmail: json['email'],
       caregiverUsername: json['username'],
-      caregiverPassword: json['password'],
+      caregiverPassword: json['password'] as String?,
       caregiverRole: json['role'],
       caregiverStatus: json['status'],
       children: children,

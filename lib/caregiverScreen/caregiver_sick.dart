@@ -16,65 +16,65 @@ class _CaregiverSicknessState extends State<CaregiverSickness> {
   String? sicknessType;
   String? dosage;
   String sicknessStatus = "Pending";
-  DateTime? dateTime; // Changed type to DateTime
-  List<ChildModel> childrenList = [];
-  List<SicknessModel> checklistItems = []; // List to hold checklist items
-  Map<int, bool> checkedMap = {};
+  DateTime? dateTime;
+  List<SicknessModel> checklistItems = [];
 
   Future<void> fetchChecklistItems() async {
-  RequestController req =
-      RequestController(path: 'sickness-data/${widget.caregiverId}');
+    RequestController req = RequestController(path: 'sickness-data/${widget.caregiverId}');
+    await req.get();
+    var response = req.result();
+    print("raw response: $response");
 
-  await req.get();
-  var response = req.result();
-  print("raw response: $response"); // Print the raw response
+    if (response != null && response['child_group'] is List) {
+      List<dynamic> childGroupList = response['child_group'];
+      DateTime now = DateTime.now();
 
-  if (response != null && response['child_group'] is List) {
-    // Clear existing checklist items before updating
-    setState(() {
-      checklistItems.clear();
-    });
+      setState(() {
+        checklistItems.clear();  // Clear the list before adding new items
+      });
 
-    List<dynamic> childGroupList = response['child_group'];
+      for (var childGroup in childGroupList) {
+        var child = childGroup['child'];
+        if (child != null && child['sicknesses'] is List) {
+          List<dynamic> sicknessesList = child['sicknesses'];
+          ChildModel childModel = ChildModel.fromJson(child);
+          for (var sickness in sicknessesList) {
+            SicknessModel sicknessModel = SicknessModel.fromJson(sickness, childModel: childModel);
 
-    for (var childGroup in childGroupList) {
-      var child = childGroup['child'];
-      if (child != null && child['sicknesses'] is List) {
-        List<dynamic> sicknessesList = child['sicknesses'];
-        ChildModel childModel =
-            ChildModel.fromJson(child); // Parse child data
-        print(
-            "Child Model: ${childModel.childName}"); // Debug print for child model
-        for (var sickness in sicknessesList) {
-          if (sickness != null && sickness['status'] == "Pending") {
-            setState(() {
-              checklistItems.add(
-                  SicknessModel.fromJson(sickness, childModel: childModel));
-            });
+            // Filter by current date
+            DateTime sicknessDate = DateTime.parse(sicknessModel.dateTime);
+            if (sicknessDate.year == now.year && sicknessDate.month == now.month && sicknessDate.day == now.day) {
+              setState(() {
+                checklistItems.add(sicknessModel);
+              });
+            }
           }
         }
       }
+
+      // Sort the list so that "Pending" items are on top
+      checklistItems.sort((a, b) {
+        if (a.sicknessStatus == 'Pending' && b.sicknessStatus == 'Taken') {
+          return -1;
+        } else if (a.sicknessStatus == 'Taken' && b.sicknessStatus == 'Pending') {
+          return 1;
+        }
+        return 0;
+      });
     }
   }
-}
 
   Future<void> updateSicknessStatus(int? sicknessId) async {
-    // Prepare the request body with the status "Taken"
     Map<String, dynamic> requestBody = {};
-
     if (sicknessStatus == "Pending") {
       requestBody["status"] = "Taken";
       sicknessStatus = "Taken";
     }
 
-    // Create an instance of RequestController
-    RequestController req =
-        RequestController(path: 'caregiver/update-sickness/$sicknessId');
-
+    RequestController req = RequestController(path: 'caregiver/update-sickness/$sicknessId');
     req.setBody(requestBody);
     await req.put();
 
-    print(req.result());
     if (req.status() == 200) {
       Fluttertoast.showToast(
         msg: 'Update successfully',
@@ -94,6 +94,9 @@ class _CaregiverSicknessState extends State<CaregiverSickness> {
         fontSize: 16.0,
       );
     }
+
+    // Refresh data after updating the status
+    await fetchChecklistItems();
   }
 
   Future<void> _refreshData() async {
@@ -103,7 +106,7 @@ class _CaregiverSicknessState extends State<CaregiverSickness> {
   @override
   void initState() {
     super.initState();
-    fetchChecklistItems(); // Fetch checklist items when the widget initializes
+    fetchChecklistItems();
   }
 
   @override
@@ -131,8 +134,7 @@ class _CaregiverSicknessState extends State<CaregiverSickness> {
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                       TextSpan(
-                        text:
-                            '${item.childModel?.childName ?? "Unknown"}', // Handle null child name
+                        text: '${item.childModel?.childName ?? "Unknown"}',
                         style: TextStyle(fontWeight: FontWeight.normal),
                       ),
                     ],
@@ -153,11 +155,7 @@ class _CaregiverSicknessState extends State<CaregiverSickness> {
                     setState(() {
                       item.sicknessStatus = value! ? 'Taken' : 'Pending';
                     });
-                    // Call updateSicknessStatus when the checkbox is toggled
-                    updateSicknessStatus(item
-                        .sicknessId); // Assuming the id property is accessible
-                    print(
-                        'Updated status for ${item.sicknessType}: ${item.sicknessStatus}');
+                    updateSicknessStatus(item.sicknessId);
                   },
                 ),
               ),
@@ -169,10 +167,7 @@ class _CaregiverSicknessState extends State<CaregiverSickness> {
   }
 
   String _formatDateTime(String dateTimeString) {
-    // Parse the dateTimeString to DateTime object
     DateTime dateTime = DateTime.parse(dateTimeString);
-
-    // Format the DateTime object in 12-hour system with AM/PM indicator
     return DateFormat('MMMM dd, yyyy hh:mm a').format(dateTime);
   }
 }

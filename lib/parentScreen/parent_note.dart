@@ -53,7 +53,7 @@ class _ParentNoteState extends State<ParentNote> with SingleTickerProviderStateM
                 caregiverICNumber: x['ic_number'] as String,
                 caregiverEmail: x['email'] as String,
                 caregiverUsername: x['username'] as String,
-                caregiverPassword: x['password'] as String,
+                caregiverPassword: x['password'] as String?,
                 caregiverRole: x['role'] as String,
                 caregiverStatus: x['status'] as String,
               ))
@@ -145,12 +145,13 @@ Future<void> fetchNotesBycaregiverId(int? caregiverId) async {
       // Filter notes by parentId
       noteList = noteList.where((note) => note.parentId == widget.parentId).toList();
 
-      // Get today's notes
+      // Get today's notes with senderType 'parent' only
       DateTime now = DateTime.now();
       todayNotes = noteList.where((note) {
         return note.noteDateTime.year == now.year &&
             note.noteDateTime.month == now.month &&
-            note.noteDateTime.day == now.day;
+            note.noteDateTime.day == now.day &&
+            note.senderType == 'parent';
       }).toList();
 
       // Filter all notes by sender type
@@ -167,6 +168,7 @@ Future<void> fetchNotesBycaregiverId(int? caregiverId) async {
     print("Failed to fetch notes data");
   }
 }
+
 
 
   @override
