@@ -37,13 +37,6 @@ class _CaregiverProfileState extends State<CaregiverProfile> {
         caregiverEmail = data['email'] ?? 'Unknown';
         caregiverId = data['id'];
         print('Fetched Caregiver ID: $caregiverId');
-
-        // Update text controllers with the fetched data
-        caregiverName = caregiverName;
-        caregiverUsername = caregiverUsername;
-        caregiverIcNumber = caregiverIcNumber;
-        caregiverPhoneNumber = caregiverPhoneNumber;
-        caregiverEmail = caregiverEmail;
       });
     } catch (error) {
       print('Error fetching caregiver details: $error');
@@ -115,8 +108,7 @@ class _CaregiverProfileState extends State<CaregiverProfile> {
                 margin: const EdgeInsets.symmetric(
                     vertical: 8, horizontal: 16), // Adjust margin for spacing
                 decoration: BoxDecoration(
-                  color:
-                      Colors.pink[50], // Change color to match kids' background
+                  color: Colors.pink[50], // Change color to match kids' background
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
@@ -129,12 +121,6 @@ class _CaregiverProfileState extends State<CaregiverProfile> {
                 ),
                 child: Column(
                   children: [
-                    CircleAvatar(
-                      radius: profileHeight / 2,
-                      backgroundColor: Colors.grey.shade800,
-                      backgroundImage:
-                          const AssetImage('assets/profile_pic.jpg'),
-                    ),
                     const SizedBox(height: 16),
                     Text(
                       caregiverUsername,

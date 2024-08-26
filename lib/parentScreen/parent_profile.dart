@@ -23,25 +23,24 @@ class _ParentProfileState extends State<ParentProfile> {
   int? parentId;
 
   Future<void> fetchParentDetails() async {
-  try {
-    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    String? email = sharedPreferences.getString('email');
-    
-    final data = await getParentDetails(email);
-    print('Response Data: $data');
-    setState(() {
-      parentUsername = data['username'];
-      parentName = data['name'];
-      parentIcNumber = data['ic_number'];
-      parentPhoneNumber = data['phone_number'];
-      parentEmail = data['email'];
-      parentId = data['id'];
-    });
-  } catch (error) {
-    print('Error fetching parent details: $error');
+    try {
+      SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+      String? email = sharedPreferences.getString('email');
+      
+      final data = await getParentDetails(email);
+      print('Response Data: $data');
+      setState(() {
+        parentUsername = data['username'];
+        parentName = data['name'];
+        parentIcNumber = data['ic_number'];
+        parentPhoneNumber = data['phone_number'];
+        parentEmail = data['email'];
+        parentId = data['id'];
+      });
+    } catch (error) {
+      print('Error fetching parent details: $error');
+    }
   }
-}
-
 
   Future<Map<String, dynamic>> getParentDetails(String? email) async {
     print('email : $email');
@@ -70,7 +69,7 @@ class _ParentProfileState extends State<ParentProfile> {
     if (response != null && response.containsKey('children')) {
       List<dynamic> childrenData = response['children'];
 
-      // parese every int to string
+      // parse every int to string
       List<ChildModel> childrenList = childrenData.map((childData) {
         return ChildModel(
           childId: int.tryParse(
@@ -259,11 +258,6 @@ class _ParentProfileState extends State<ParentProfile> {
                 ),
                 child: Column(
                   children: [
-                    CircleAvatar(
-                      radius: profileHeight / 2,
-                      backgroundColor: Colors.grey.shade800,
-                      backgroundImage: AssetImage('assets/profile_pic.jpg'),
-                    ),
                     SizedBox(height: 16),
                     Text(
                       parentUsername,
@@ -320,30 +314,25 @@ class _ParentProfileState extends State<ParentProfile> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => ParentEditProfile(
-                              parentId: parentId,
-                            ),
+                            builder: (context) => ParentEditProfile(),
                           ),
                         );
                       },
                       icon: Icon(Icons.edit),
-                      label: Text('Edit Profile'),
+                      label: Text('Edit Parent Profile'),
                       style: ElevatedButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        backgroundColor: Colors.pinkAccent,
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 24, vertical: 12),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24),
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                        padding:
-                            EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+                        backgroundColor: Colors.pinkAccent,
                       ),
                     ),
                   ],
                 ),
               ),
-
               SizedBox(height: 16),
-              // Display children's names
               buildKids(),
             ],
           ),

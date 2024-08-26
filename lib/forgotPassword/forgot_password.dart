@@ -50,11 +50,6 @@ class _ForgotPwdState extends State<ForgotPwd> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Image.asset(
-                    'assets/images/forgot_password.png', // Add an appropriate image in your assets
-                    height: 150,
-                  ),
-                  const SizedBox(height: 20.0),
                   _forgotText(),
                   const SizedBox(height: 20.0),
                   _instructionText(),

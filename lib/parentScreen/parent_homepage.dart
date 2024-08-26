@@ -699,28 +699,57 @@ class _ParentHomepageState extends State<ParentHomepage> {
               leading: const Icon(Icons.logout),
               title: const Text('Logout'),
               onTap: () async {
-                final SharedPreferences sharedPreferences =
-                    await SharedPreferences.getInstance();
+                // Show confirmation dialog
+                bool? confirmLogout = await showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: const Text("Confirm Logout"),
+                      content: const Text("Are you sure you want to log out?"),
+                      actions: <Widget>[
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop(
+                                false); // Dismisses the dialog and returns false
+                          },
+                          child: const Text("Cancel"),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop(
+                                true); // Dismisses the dialog and returns true
+                          },
+                          child: const Text("Logout"),
+                        ),
+                      ],
+                    );
+                  },
+                );
 
-                // Print shared preferences before removal
-                print('SharedPreferences before logout:');
-                print('email: ${sharedPreferences.getString('email')}');
-                print('token: ${sharedPreferences.getString('token')}');
-                print('role: ${sharedPreferences.getString('role')}');
+                if (confirmLogout == true) {
+                  final SharedPreferences sharedPreferences =
+                      await SharedPreferences.getInstance();
 
-                // Remove the shared preferences
-                await sharedPreferences.remove('email');
-                await sharedPreferences.remove('token');
-                await sharedPreferences.remove('role');
+                  // Print shared preferences before removal
+                  print('SharedPreferences before logout:');
+                  print('email: ${sharedPreferences.getString('email')}');
+                  print('token: ${sharedPreferences.getString('token')}');
+                  print('role: ${sharedPreferences.getString('role')}');
 
-                // Print shared preferences after removal
-                print('SharedPreferences after logout:');
-                print('email: ${sharedPreferences.getString('email')}');
-                print('token: ${sharedPreferences.getString('token')}');
-                print('role: ${sharedPreferences.getString('role')}');
+                  // Remove the shared preferences
+                  await sharedPreferences.remove('email');
+                  await sharedPreferences.remove('token');
+                  await sharedPreferences.remove('role');
 
-                // Navigate to Role screen
-                Get.offAll(Role());
+                  // Print shared preferences after removal
+                  print('SharedPreferences after logout:');
+                  print('email: ${sharedPreferences.getString('email')}');
+                  print('token: ${sharedPreferences.getString('token')}');
+                  print('role: ${sharedPreferences.getString('role')}');
+
+                  // Navigate to Role screen
+                  Get.offAll(Role());
+                }
               },
             ),
           ],
