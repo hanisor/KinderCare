@@ -15,108 +15,87 @@ class CaregiverBehaviourReport extends StatefulWidget {
 }
 
 class _CaregiverBehaviourReportState extends State<CaregiverBehaviourReport> {
-  List<BehaviourModel> behaviourList = [];
-  Map<String, Map<String, Map<int, List<BehaviourModel>>>> groupedBehaviourMap =
-      {};
+  Map<String, Map<String, List<BehaviourModel>>> groupedBehaviourMap = {};
 
   @override
   void initState() {
     super.initState();
-    // Fetch child behaviours when the widget initializes
     fetchChildBehavioursByCaregiverId();
   }
 
   Future<void> fetchChildBehavioursByCaregiverId() async {
-  try {
-    RequestController req =
-        RequestController(path: 'behaviour/${widget.caregiverId}');
-    await req.get();
-    var response = req.result();
+    try {
+      RequestController req =
+          RequestController(path: 'behaviour/${widget.caregiverId}');
+      await req.get();
+      var response = req.result();
 
-    if (response != null) {
-      if (response is Map<String, dynamic>) {
-        final responseData = response as Map<String, dynamic>;
-        final childGroup = responseData['child_group'];
+      if (response != null) {
+        if (response is Map<String, dynamic>) {
+          final responseData = response as Map<String, dynamic>;
+          final childGroup = responseData['child_group'];
 
-        setState(() {
-          behaviourList.clear();
-          groupedBehaviourMap.clear();
+          setState(() {
+            groupedBehaviourMap.clear();
 
-          childGroup.forEach((childGroupItem) {
-            final child = childGroupItem['child'];
-            final behaviours = child['behaviours'];
-            final childModel = ChildModel.fromJson(child);
+            childGroup.forEach((childGroupItem) {
+              final child = childGroupItem['child'];
+              final behaviours = child['behaviours'];
+              final childModel = ChildModel.fromJson(child);
+              final String childName = childModel.childName ?? 'Unknown Child';
+              final String parentName =
+                  childModel.guardian?.parentName ?? 'Unknown Parent';
 
-            behaviours.forEach((behaviour) {
-              BehaviourModel behaviourModel =
-                  BehaviourModel.fromJson(behaviour, childModel: childModel);
+              behaviours.forEach((behaviour) {
+                BehaviourModel behaviourModel =
+                    BehaviourModel.fromJson(behaviour, childModel: childModel);
 
-              String date = DateFormat('yyyy-MM-dd')
-                  .format(DateTime.parse(behaviourModel.dateTime));
-              String month = DateFormat('yyyy-MM')
-                  .format(DateTime.parse(behaviourModel.dateTime));
-              final dateOfBirthString = child['date_of_birth'];
-              if (dateOfBirthString != null) {
-                try {
-                  final dob = DateFormat('yyyy-MM-dd').parse(dateOfBirthString);
-                  final now = DateTime.now();
-                  final age = now.year - dob.year;
+                String month = DateFormat('yyyy-MM')
+                    .format(DateTime.parse(behaviourModel.dateTime));
 
-                  if (groupedBehaviourMap[month] == null) {
-                    groupedBehaviourMap[month] = {};
-                  }
-                  if (groupedBehaviourMap[month]![date] == null) {
-                    groupedBehaviourMap[month]![date] = {};
-                  }
-                  if (groupedBehaviourMap[month]![date]![age] == null) {
-                    groupedBehaviourMap[month]![date]![age] = [];
-                  }
-                  groupedBehaviourMap[month]![date]![age]!
-                      .add(behaviourModel);
-                } catch (_) {
-                  try {
-                    final dob = DateFormat('MM/dd/yyyy').parse(dateOfBirthString);
-                    final now = DateTime.now();
-                    final age = now.year - dob.year;
-
-                    if (groupedBehaviourMap[month] == null) {
-                      groupedBehaviourMap[month] = {};
-                    }
-                    if (groupedBehaviourMap[month]![date] == null) {
-                      groupedBehaviourMap[month]![date] = {};
-                    }
-                    if (groupedBehaviourMap[month]![date]![age] == null) {
-                      groupedBehaviourMap[month]![date]![age] = [];
-                    }
-                    groupedBehaviourMap[month]![date]![age]!
-                        .add(behaviourModel);
-                  } catch (error) {
-                    print('Invalid date of birth format: $dateOfBirthString');
-                  }
+                if (groupedBehaviourMap[month] == null) {
+                  groupedBehaviourMap[month] = {};
                 }
-              }
+
+                String key = '$childName - $parentName';
+
+                if (groupedBehaviourMap[month]![key] == null) {
+                  groupedBehaviourMap[month]![key] = [];
+                }
+
+                groupedBehaviourMap[month]![key]!.add(behaviourModel);
+              });
             });
+
+            // Sort the behaviours within each month and child group by date in ascending order
+            groupedBehaviourMap.forEach((month, childBehaviours) {
+              childBehaviours.forEach((childKey, behaviours) {
+                behaviours.sort((a, b) => DateTime.parse(a.dateTime)
+                    .compareTo(DateTime.parse(b.dateTime)));
+              });
+            });
+
+            // Sort the groupedBehaviourMap by month in descending order
+            groupedBehaviourMap = Map.fromEntries(groupedBehaviourMap.entries.toList()
+              ..sort((a, b) => b.key.compareTo(a.key)));
           });
-        });
+        } else {
+          print(
+              'Failed to fetch child groups and behaviours: ${response.toString()}');
+        }
       } else {
-        print(
-            'Failed to fetch child groups and behaviours: ${response.toString()}');
+        print('No response received');
       }
-    } else {
-      print('No response received');
+    } catch (error) {
+      print('Failed to fetch child groups and behaviours: $error');
     }
-  } catch (error) {
-    print('Failed to fetch child groups and behaviours: $error');
   }
-}
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Behaviour Report',
-        ),
+        title: const Text('Behaviour Report'),
         actions: [
           IconButton(
             icon: const Icon(Icons.playlist_add),
@@ -135,8 +114,9 @@ class _CaregiverBehaviourReportState extends State<CaregiverBehaviourReport> {
         itemCount: groupedBehaviourMap.length,
         itemBuilder: (BuildContext context, int index) {
           String month = groupedBehaviourMap.keys.elementAt(index);
-          Map<String, Map<int, List<BehaviourModel>>> dayGroupMap =
+          Map<String, List<BehaviourModel>> childBehaviours =
               groupedBehaviourMap[month]!;
+
           return Padding(
             padding: const EdgeInsets.all(8.0),
             child: Card(
@@ -144,104 +124,107 @@ class _CaregiverBehaviourReportState extends State<CaregiverBehaviourReport> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(15.0),
               ),
+              shadowColor: Colors.pinkAccent,
+              elevation: 5,
               child: ExpansionTile(
                 title: Text(
                   DateFormat('MMMM yyyy').format(DateTime.parse(month + '-01')),
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
+                    color: Colors.pink,
+                    fontSize: 18.0,
                   ),
                 ),
-                children: dayGroupMap.entries.map((dayEntry) {
-                  String date = dayEntry.key;
-                  Map<int, List<BehaviourModel>> ageGroupMap = dayEntry.value;
+                iconColor: Colors.pinkAccent,
+                children: childBehaviours.keys.map((childKey) {
+                  List<BehaviourModel> behaviours = childBehaviours[childKey]!;
+
                   return Padding(
                     padding: const EdgeInsets.all(8.0),
-                    child: Card(
-                      color: Colors.green[50],
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15.0),
-                      ),
-                      child: ExpansionTile(
-                        title: Text(
-                          date,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          childKey,
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
+                            fontSize: 16.0,
+                            color: Colors.pinkAccent,
                           ),
                         ),
-                        children: ageGroupMap.entries.map((entry) {
-                          int age = entry.key;
-                          List<BehaviourModel> behaviours = entry.value;
-                          return Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Card(
-                              color: Colors.blue[50],
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(15.0),
-                              ),
-                              child: ExpansionTile(
-                                title: Text(
-                                  'Age: $age',
+                        const SizedBox(height: 10.0),
+                        Table(
+                          border: TableBorder.all(
+                            color: Colors.pinkAccent,
+                            width: 1,
+                            style: BorderStyle.solid,
+                          ),
+                          columnWidths: const {
+                            0: FlexColumnWidth(2),
+                            1: FlexColumnWidth(3),
+                            2: FlexColumnWidth(5),
+                          },
+                          children: [
+                            TableRow(children: [
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Text(
+                                  'Date',
                                   style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.pink),
                                 ),
-                                children: behaviours.map((behaviour) {
-                                  return ListTile(
-                                    title: Text(
-                                      behaviour.childName ?? 'Unknown Child',
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                    subtitle: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        RichText(
-                                          text: TextSpan(
-                                            children: [
-                                              const TextSpan(
-                                                text: 'Parent Name: ',
-                                                style: TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Color.fromARGB(255, 255, 85, 141), // Replace with your desired color
-                                                ),
-                                              ),
-                                              TextSpan(
-                                                text:
-                                                    '${behaviour.childModel?.guardian?.parentName ?? 'Unknown Parent'}',
-                                                style: const TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Color
-                                                      .fromARGB(255, 255, 85, 141), // Replace with your desired color
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        Text(
-                                          'Behaviour: ${behaviour.type}',
-                                          style: const TextStyle(
-                                              fontWeight: FontWeight.bold),
-                                        ),
-                                        Text(
-                                          'Description: ${behaviour.description}',
-                                          style: const TextStyle(
-                                              fontWeight: FontWeight.bold),
-                                        ),
-                                        Text(
-                                          'Time: ${DateFormat('HH:mm').format(DateTime.parse(behaviour.dateTime))}',
-                                          style: const TextStyle(
-                                              fontWeight: FontWeight.bold),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                }).toList(),
                               ),
-                            ),
-                          );
-                        }).toList(),
-                      ),
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Text(
+                                  'Behaviour',
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.pink),
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Text(
+                                  'Description',
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.pink),
+                                ),
+                              ),
+                            ]),
+                            ...behaviours.asMap().entries.map((entry) {
+                              int i = entry.key;
+                              BehaviourModel behaviour = entry.value;
+                              return TableRow(
+                                decoration: BoxDecoration(
+                                  color: i % 2 == 0
+                                      ? Colors.pink[50]
+                                      : Colors.white,
+                                ),
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Text(DateFormat('yyyy-MM-dd')
+                                        .format(DateTime.parse(
+                                            behaviour.dateTime))),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Text(behaviour.type),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Text(behaviour.description),
+                                  ),
+                                ],
+                              );
+                            }).toList(),
+                          ],
+                        ),
+                        const SizedBox(height: 20.0),
+                      ],
                     ),
                   );
                 }).toList(),

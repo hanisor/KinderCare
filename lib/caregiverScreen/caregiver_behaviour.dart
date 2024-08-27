@@ -18,7 +18,7 @@ class _CaregiverBehaviourState extends State<CaregiverBehaviour> {
   TextEditingController behaviourController = TextEditingController();
   String? type;
   String? description;
-  DateTime? dateTime;
+  DateTime dateTime = DateTime.now();
   List<BehaviourModel> behaviourList = [];
   ChildModel? selectedChild;
   List<ChildModel> childrenList = [];
@@ -27,14 +27,20 @@ class _CaregiverBehaviourState extends State<CaregiverBehaviour> {
   @override
   void initState() {
     super.initState();
-    dateTime = DateTime.now();
-    fetchGroupId(widget.caregiverId!).then((groupId) {
+    _initializeChildrenData();
+  }
+
+  Future<void> _initializeChildrenData() async {
+    if (widget.caregiverId != null) {
+      int? groupId = await fetchGroupId(widget.caregiverId!);
       if (groupId != null) {
-        getChildrenData(groupId);
+        await getChildrenData(groupId);
       } else {
         print("Failed to get group ID for caregiver");
       }
-    });
+    } else {
+      print("Caregiver ID is null");
+    }
   }
 
   Future<int?> fetchGroupId(int caregiverId) async {
@@ -56,8 +62,7 @@ class _CaregiverBehaviourState extends State<CaregiverBehaviour> {
   }
 
   Future<void> getChildrenData(int groupId) async {
-    print("Fetching children data for groupid: $groupId");
-
+    print("Fetching children data for group ID: $groupId");
     try {
       RequestController req =
           RequestController(path: 'child-group/caregiverId/$groupId');
@@ -66,13 +71,11 @@ class _CaregiverBehaviourState extends State<CaregiverBehaviour> {
       print("Request result: $response");
 
       if (response != null && response.containsKey('group')) {
-        setState(() {
-          var childrenData = response['group'];
-          print("Children Dataaaa: $childrenData");
-
-          if (childrenData is List) {
-            childrenList =
-                List<ChildModel>.from(childrenData.map((x) => ChildModel(
+        var childrenData = response['group'];
+        if (childrenData is List) {
+          setState(() {
+            childrenList = childrenData
+                .map<ChildModel>((x) => ChildModel(
                       childId: int.tryParse(x['id']?.toString() ?? ''),
                       childName: x['name'] as String? ?? '',
                       childDOB: x['date_of_birth'] as String? ?? '',
@@ -82,26 +85,26 @@ class _CaregiverBehaviourState extends State<CaregiverBehaviour> {
                       childStatus: x['status'] as String? ?? '',
                       parentId:
                           int.tryParse(x['guardian_id']?.toString() ?? ''),
-                      performances:
-                          x['performances'] != null && x['performances'] is List
-                              ? List<PerformanceModel>.from(
-                                  (x['performances'] as List).map((e) =>
-                                      PerformanceModel.fromJson(
-                                          e as Map<String, dynamic>)))
-                              : [],
-                    )));
+                      performances: x['performances'] is List
+                          ? List<PerformanceModel>.from(
+                              (x['performances'] as List)
+                                  .map((e) => PerformanceModel.fromJson(
+                                      e as Map<String, dynamic>)))
+                          : [],
+                    ))
+                .toList();
 
             if (childrenList.isNotEmpty) {
               selectedChild = childrenList[0];
               print(
-                  'Selected child dataaaa: ${selectedChild!.childId.toString()}');
+                  'Selected child data: ${selectedChild!.childId.toString()}');
             }
-          } else {
-            print("Invalid children data format");
-          }
-        });
+          });
+        } else {
+          print("Invalid children data format");
+        }
       } else {
-        print("Failed to fetch children data or key 'child_group' not found");
+        print("Failed to fetch children data or key 'group' not found");
       }
       print("childrenList: $childrenList");
     } catch (e) {
@@ -110,19 +113,25 @@ class _CaregiverBehaviourState extends State<CaregiverBehaviour> {
   }
 
   Future<void> addBehaviour() async {
-    try {
-      if (type == null ||
-          description == null ||
-          dateTime == null ||
-          selectedChild == null) {
-        return;
-      }
+    if (selectedChild == null) {
+      await _showCustomDialog('Error', 'Please select a child.', Icons.error, Colors.red);
+      return;
+    }
 
-      String formattedDateTime =
-          DateFormat("yyyy-MM-dd HH:mm:ss").format(dateTime!);
+    if (type == null || type!.isEmpty) {
+      await _showCustomDialog('Error', 'Please select an emotion.', Icons.error, Colors.red);
+      return;
+    }
+
+    if (description == null || description!.isEmpty) {
+      await _showCustomDialog('Error', 'Please enter a description.', Icons.error, Colors.red);
+      return;
+    }
+
+    try {
+      String formattedDateTime = DateFormat("yyyy-MM-dd HH:mm:ss").format(dateTime);
 
       RequestController req = RequestController(path: 'add-behaviour');
-
       req.setBody({
         "type": type,
         "description": description,
@@ -131,19 +140,11 @@ class _CaregiverBehaviourState extends State<CaregiverBehaviour> {
       });
 
       var response = await req.post();
-
       if (response.statusCode == 200) {
         var result = req.result();
-
         if (result != null) {
           print('Behavior report saved successfully');
-          await showCustomDialog(
-            context,
-            'Success!',
-            'Behavior report added successfully!',
-            Icons.check_circle,
-            Colors.green,
-          );
+          await _showCustomDialog('Success!', 'Behavior report added successfully!', Icons.check_circle, Colors.green);
           if (mounted) {
             Navigator.push(
               context,
@@ -154,39 +155,20 @@ class _CaregiverBehaviourState extends State<CaregiverBehaviour> {
           }
         } else {
           print('Error saving behavior report');
-          await showCustomDialog(
-            context,
-            'Error',
-            'Failed to save behavior report.',
-            Icons.error,
-            Colors.red,
-          );
+          await _showCustomDialog('Error', 'Failed to save behavior report.', Icons.error, Colors.red);
         }
       } else {
-        print(
-            'Error: HTTP request failed with status code ${response.statusCode}');
-        await showCustomDialog(
-          context,
-          'Error',
-          'Failed to save behavior report.',
-          Icons.error,
-          Colors.red,
-        );
+        print('Error: HTTP request failed with status code ${response.statusCode}');
+        await _showCustomDialog('Error', 'Failed to save behavior report.', Icons.error, Colors.red);
       }
     } catch (e) {
       print('Error: $e');
-      await showCustomDialog(
-        context,
-        'Error',
-        'An error occurred: $e',
-        Icons.error,
-        Colors.red,
-      );
+      await _showCustomDialog('Error', 'An error occurred: $e', Icons.error, Colors.red);
     }
   }
 
-  Future<void> showCustomDialog(BuildContext context, String title,
-      String message, IconData icon, Color iconColor) async {
+  Future<void> _showCustomDialog(
+      String title, String message, IconData icon, Color iconColor) async {
     await showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -226,9 +208,9 @@ class _CaregiverBehaviourState extends State<CaregiverBehaviour> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            DropdownButton(
+            DropdownButton<String>(
               hint: const Text(
-                "Select Child ",
+                "Select Child",
                 style: TextStyle(
                   color: Colors.pink,
                 ),
@@ -266,9 +248,6 @@ class _CaregiverBehaviourState extends State<CaregiverBehaviour> {
                 });
               },
             ),
-            if (selectedChild != null) ...[
-              const SizedBox(height: 10),
-            ],
             const SizedBox(height: 10),
             DropdownButtonFormField<String>(
               hint: const Text(
@@ -336,34 +315,21 @@ class _CaregiverBehaviourState extends State<CaregiverBehaviour> {
               },
             ),
             const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  "Date & Time: ${DateFormat("yyyy-MM-dd HH:mm:ss").format(dateTime!)}",
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
+            Text(
+              "Date & Time: ${DateFormat("yyyy-MM-dd HH:mm:ss").format(dateTime)}",
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () {
-                addBehaviour();
-              },
+              onPressed: addBehaviour,
               child: const Text('Submit'),
             ),
           ],
         ),
       ),
     );
-  }
-
-  String _formatDateTime(DateTime dateTime) {
-    String time = DateFormat.jm().format(dateTime);
-    String date = DateFormat.yMMMd().format(dateTime);
-    return '$time, $date';
   }
 }

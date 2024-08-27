@@ -110,61 +110,82 @@ class _CaregiverSicknessState extends State<CaregiverSickness> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Sickness checklist'),
-      ),
-      body: RefreshIndicator(
-        onRefresh: _refreshData,
-        child: ListView.builder(
-          itemCount: checklistItems.length,
-          itemBuilder: (context, index) {
-            SicknessModel item = checklistItems[index];
-            return Card(
-              elevation: 4,
-              margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-              child: ListTile(
-                title: RichText(
-                  text: TextSpan(
-                    style: DefaultTextStyle.of(context).style,
-                    children: <TextSpan>[
-                      const TextSpan(
-                        text: 'Child Name: ',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      TextSpan(
-                        text: '${item.childModel?.childName ?? "Unknown"}',
-                        style: TextStyle(fontWeight: FontWeight.normal),
-                      ),
-                    ],
+Widget build(BuildContext context) {
+  return Scaffold(
+    appBar: AppBar(
+      title: Text('Sickness checklist'),
+    ),
+    body: RefreshIndicator(
+      onRefresh: _refreshData,
+      child: checklistItems.isEmpty
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.sentiment_dissatisfied,
+                    size: 100,
+                    color: Colors.grey,
                   ),
-                ),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Sickness Type: ${item.sicknessType}'),
-                    Text('Dosage: ${item.dosage}'),
-                    Text('Date and Time: ${_formatDateTime(item.dateTime)}'),
-                    Text('Status: ${item.sicknessStatus}'),
-                  ],
-                ),
-                trailing: Checkbox(
-                  value: item.sicknessStatus == 'Taken',
-                  onChanged: (bool? value) {
-                    setState(() {
-                      item.sicknessStatus = value! ? 'Taken' : 'Pending';
-                    });
-                    updateSicknessStatus(item.sicknessId);
-                  },
-                ),
+                  SizedBox(height: 16),
+                  Text(
+                    'No sickness checklist available',
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ],
               ),
-            );
-          },
-        ),
-      ),
-    );
-  }
+            )
+          : ListView.builder(
+              itemCount: checklistItems.length,
+              itemBuilder: (context, index) {
+                SicknessModel item = checklistItems[index];
+                return Card(
+                  elevation: 4,
+                  margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                  child: ListTile(
+                    title: RichText(
+                      text: TextSpan(
+                        style: DefaultTextStyle.of(context).style,
+                        children: <TextSpan>[
+                          const TextSpan(
+                            text: 'Child Name: ',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          TextSpan(
+                            text: '${item.childModel?.childName ?? "Unknown"}',
+                            style: TextStyle(fontWeight: FontWeight.normal),
+                          ),
+                        ],
+                      ),
+                    ),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Sickness Type: ${item.sicknessType}'),
+                        Text('Dosage: ${item.dosage}'),
+                        Text('Date and Time: ${_formatDateTime(item.dateTime)}'),
+                        Text('Status: ${item.sicknessStatus}'),
+                      ],
+                    ),
+                    trailing: Checkbox(
+                      value: item.sicknessStatus == 'Taken',
+                      onChanged: (bool? value) {
+                        setState(() {
+                          item.sicknessStatus = value! ? 'Taken' : 'Pending';
+                        });
+                        updateSicknessStatus(item.sicknessId);
+                      },
+                    ),
+                  ),
+                );
+              },
+            ),
+    ),
+  );
+}
 
   String _formatDateTime(String dateTimeString) {
     DateTime dateTime = DateTime.parse(dateTimeString);

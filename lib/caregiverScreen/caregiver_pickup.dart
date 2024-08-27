@@ -60,53 +60,51 @@ class _CaregiverPickupState extends State<CaregiverPickup> {
     }
   }
 
- Future<void> updatePickup(int? relativeId) async {
-  // Prepare the request body with the status "Taken"
-  Map<String, dynamic> requestBody = {};
+  Future<void> updatePickup(int? relativeId) async {
+    // Prepare the request body with the status "Taken"
+    Map<String, dynamic> requestBody = {};
 
-  // Find the ChildRelativeModel corresponding to the relativeId
-ChildRelativeModel? item = childRelativeList.firstWhere(
-  (childRelative) => childRelative.relativeId == relativeId,
-  // ignore: cast_from_null_always_fails
-  orElse: () => null as ChildRelativeModel,
-);
-
-
-  // Update the relative status
-  if (item.relativeModel?.status == "ACTIVE") {
-    requestBody["status"] = "INACTIVE";
-    item.relativeModel?.status = "INACTIVE";
-  }
-
-  // Create an instance of RequestController
-  RequestController req =
-      RequestController(path: 'relative/delete/$relativeId');
-
-  req.setBody(requestBody);
-  await req.put();
-
-  print(req.result());
-  if (req.status() == 200) {
-    Fluttertoast.showToast(
-      msg: 'Update successfully',
-      backgroundColor: Colors.white,
-      textColor: Colors.red,
-      gravity: ToastGravity.CENTER,
-      toastLength: Toast.LENGTH_SHORT,
-      fontSize: 16.0,
+    // Find the ChildRelativeModel corresponding to the relativeId
+    ChildRelativeModel? item = childRelativeList.firstWhere(
+      (childRelative) => childRelative.relativeId == relativeId,
+      // ignore: cast_from_null_always_fails
+      orElse: () => null as ChildRelativeModel,
     );
-  } else {
-    Fluttertoast.showToast(
-      msg: 'Update failed!',
-      backgroundColor: Colors.white,
-      textColor: Colors.red,
-      gravity: ToastGravity.CENTER,
-      toastLength: Toast.LENGTH_SHORT,
-      fontSize: 16.0,
-    );
-  }
-}
 
+    // Update the relative status
+    if (item.relativeModel?.status == "ACTIVE") {
+      requestBody["status"] = "INACTIVE";
+      item.relativeModel?.status = "INACTIVE";
+    }
+
+    // Create an instance of RequestController
+    RequestController req =
+        RequestController(path: 'relative/delete/$relativeId');
+
+    req.setBody(requestBody);
+    await req.put();
+
+    print(req.result());
+    if (req.status() == 200) {
+      Fluttertoast.showToast(
+        msg: 'Update successfully',
+        backgroundColor: Colors.white,
+        textColor: Colors.red,
+        gravity: ToastGravity.CENTER,
+        toastLength: Toast.LENGTH_SHORT,
+        fontSize: 16.0,
+      );
+    } else {
+      Fluttertoast.showToast(
+        msg: 'Update failed!',
+        backgroundColor: Colors.white,
+        textColor: Colors.red,
+        gravity: ToastGravity.CENTER,
+        toastLength: Toast.LENGTH_SHORT,
+        fontSize: 16.0,
+      );
+    }
+  }
 
   Future<void> _refreshData() async {
     //await getChildrenData();
@@ -134,78 +132,100 @@ ChildRelativeModel? item = childRelativeList.firstWhere(
       appBar: AppBar(
         title: const Text('Pickup Report'),
       ),
-      body: ListView(
-        children: childrenByRelativeId.entries.map((entry) {
-          List<ChildRelativeModel> children = entry.value;
-
-          return Dismissible(
-            key: UniqueKey(),
-            direction: DismissDirection.startToEnd,
-            background: Container(
-              color: Colors.red,
-              alignment: Alignment.centerLeft,
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: const Icon(Icons.delete, color: Colors.white),
-            ),
-            confirmDismiss: (DismissDirection direction) async {
-              return await _confirmDelete(); // Function to confirm deletion
-            },
-            onDismissed: (direction) async {
-              await updatePickup(children.first.relativeId); // Update status
-            },
-            child: Card(
-              elevation: 4,
-              margin: const EdgeInsets.all(8),
+      body: childRelativeList.isEmpty
+          ? Center(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text(
-                      'Relative Name: ${children.first.relativeModel?.name ?? ''}',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                  Icon(
+                    Icons.sentiment_dissatisfied,
+                    size: 100,
+                    color: Colors.grey,
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    'No pickup reports available.',
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: Colors.grey,
                     ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                ],
+              ),
+            )
+          : ListView(
+              children: childrenByRelativeId.entries.map((entry) {
+                List<ChildRelativeModel> children = entry.value;
+
+                return Dismissible(
+                  key: UniqueKey(),
+                  direction: DismissDirection.startToEnd,
+                  background: Container(
+                    color: Colors.red,
+                    alignment: Alignment.centerLeft,
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                    child: const Icon(Icons.delete, color: Colors.white),
+                  ),
+                  confirmDismiss: (DismissDirection direction) async {
+                    return await _confirmDelete(); // Function to confirm deletion
+                  },
+                  onDismissed: (direction) async {
+                    await updatePickup(
+                        children.first.relativeId); // Update status
+                  },
+                  child: Card(
+                    elevation: 4,
+                    margin: const EdgeInsets.all(8),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Relation: ${children.first.relativeModel?.relation ?? ''}',
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text(
+                            'Relative Name: ${children.first.relativeModel?.name ?? ''}',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
                         ),
-                        Text(
-                          'Phone Number: ${children.first.relativeModel?.phone_number ?? ''}',
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Relation: ${children.first.relativeModel?.relation ?? ''}',
+                              ),
+                              Text(
+                                'Phone Number: ${children.first.relativeModel?.phone_number ?? ''}',
+                              ),
+                              Text(
+                                'Date and Time: ${_formatDateTime(children.first.relativeModel!.dateTime)}',
+                              ),
+                            ],
+                          ),
                         ),
-                        Text(
-                          'Date and Time: ${_formatDateTime(children.first.relativeModel!.dateTime)}',
+                        const SizedBox(height: 4), // Reduced gap
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 16),
+                          child: Text(
+                            'Children Information:', // Display "Children Information" once
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
                         ),
+                        ...children.map((childRelative) {
+                          return ListTile(
+                            title: Text(
+                              childRelative.childModel?.childName ?? '',
+                            ),
+                            subtitle: Text(
+                                'My kid number: ${childRelative.childModel?.childMykidNumber ?? ''}'), // No subtitle
+                          );
+                        }).toList(),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 4), // Reduced gap
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16),
-                    child: Text(
-                      'Children Information:', // Display "Children Information" once
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  ...children.map((childRelative) {
-                    return ListTile(
-                      title: Text(
-                        childRelative.childModel?.childName ?? '',
-                      ),
-                      subtitle: Text(
-                          'My kid number: ${childRelative.childModel?.childMykidNumber ?? ''}'), // No subtitle
-                    );
-                  }).toList(),
-                ],
-              ),
+                );
+              }).toList(),
             ),
-          );
-        }).toList(),
-      ),
     );
   }
 

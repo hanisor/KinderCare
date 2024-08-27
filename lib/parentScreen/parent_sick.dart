@@ -273,69 +273,92 @@ class _ParentSicknessState extends State<ParentSickness> {
   }
 
   void _addChecklistDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Add Checklist'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                decoration: InputDecoration(labelText: 'Sickness Type'),
-                onChanged: (value) => sicknessType = value,
-              ),
-              TextField(
-                decoration: InputDecoration(labelText: 'Dosage'),
-                onChanged: (value) => dosage = value,
-              ),
-              DateTimeField(
-                decoration: InputDecoration(labelText: 'Date & Time'),
-                format: DateFormat("yyyy-MM-dd HH:mm"), // Date and time format
-                onShowPicker: (context, currentValue) async {
-                  final date = await showDatePicker(
-                    context: context,
-                    firstDate: DateTime(2000),
-                    initialDate: currentValue ?? DateTime.now(),
-                    lastDate: DateTime(2100),
-                  );
-                  if (date != null) {
-                    final time = await showTimePicker(
-                      context: context,
-                      initialTime: TimeOfDay.fromDateTime(
-                          currentValue ?? DateTime.now()),
-                    );
-                    return DateTimeField.combine(
-                        date, time); // Combine date and time
-                  } else {
-                    return currentValue;
-                  }
-                },
-                onChanged: (DateTime? value) {
-                  setState(() {
-                    dateTime = value;
-                  });
-                },
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                _saveChecklistItem();
-                Navigator.of(context).pop();
-              },
-              child: Text('Save'),
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text('Add Checklist'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              decoration: InputDecoration(labelText: 'Sickness Type'),
+              onChanged: (value) => sicknessType = value,
             ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
+            TextField(
+              decoration: InputDecoration(labelText: 'Dosage'),
+              onChanged: (value) => dosage = value,
+            ),
+            DateTimeField(
+              decoration: InputDecoration(labelText: 'Date & Time'),
+              format: DateFormat("yyyy-MM-dd HH:mm"), // Date and time format
+              onShowPicker: (context, currentValue) async {
+                final date = await showDatePicker(
+                  context: context,
+                  firstDate: DateTime(2000),
+                  initialDate: currentValue ?? DateTime.now(),
+                  lastDate: DateTime(2100),
+                );
+                if (date != null) {
+                  final time = await showTimePicker(
+                    context: context,
+                    initialTime: TimeOfDay.fromDateTime(
+                        currentValue ?? DateTime.now()),
+                  );
+                  return DateTimeField.combine(date, time); // Combine date and time
+                } else {
+                  return currentValue;
+                }
               },
-              child: Text('Cancel'),
+              onChanged: (DateTime? value) {
+                setState(() {
+                  dateTime = value;
+                });
+              },
             ),
           ],
-        );
-      },
-    );
-  }
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              if (sicknessType == null || sicknessType!.isEmpty ||
+                  dosage == null || dosage!.isEmpty ||
+                  dateTime == null) {
+                // Show a pop-up message if any field is missing
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: Text('Incomplete Information'),
+                      content: Text('Please fill in all the fields before saving.'),
+                      actions: [
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                          child: Text('OK'),
+                        ),
+                      ],
+                    );
+                  },
+                );
+              } else {
+                _saveChecklistItem();
+                Navigator.of(context).pop();
+              }
+            },
+            child: Text('Save'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: Text('Cancel'),
+          ),
+        ],
+      );
+    },
+  );
+}
+
 }

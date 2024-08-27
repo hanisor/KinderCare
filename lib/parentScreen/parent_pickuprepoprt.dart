@@ -17,8 +17,13 @@ class _ParentPickupReportState extends State<ParentPickupReport> {
   List<ChildRelativeModel> childRelativeList = [];
 
   Future<void> fetchRelative() async {
-    RequestController req = RequestController(path: 'childRelative-data');
+  if (widget.parentId == null) {
+    print('Parent ID is null');
+    return;
+  }
 
+  try {
+    RequestController req = RequestController(path: 'childRelative-data');
     await req.get();
     var response = req.result();
     if (response != null && response is List) {
@@ -26,7 +31,9 @@ class _ParentPickupReportState extends State<ParentPickupReport> {
         childRelativeList = List<ChildRelativeModel>.from(response.map((x) {
           x['id'] = int.tryParse(x['id'].toString());
           return ChildRelativeModel.fromJson(x);
-        }).where((item) => item.relativeModel?.status == 'ACTIVE'));
+        }).where((item) =>
+            item.relativeModel?.status == 'ACTIVE' &&
+            item.childModel?.parentId == widget.parentId));
 
         childRelativeList.sort((a, b) {
           if (a.relativeModel?.dateTime == null ||
@@ -45,7 +52,11 @@ class _ParentPickupReportState extends State<ParentPickupReport> {
         });
       });
     }
+  } catch (e) {
+    print('Failed to fetch relatives: $e');
   }
+}
+
 
   Future<void> softDeleteRelative(int? relativeId) async {
     if (relativeId != null) {

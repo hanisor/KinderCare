@@ -25,7 +25,12 @@ class _ParentBehaviourState extends State<ParentBehaviour> {
   String selectedMonthYear = '';
   List<String> availableMonths = [];
 
+  // New variables for child selection
+  String selectedChildName = '';
+  List<String> availableChildren = [];
+
   Future<void> getChildrenData() async {
+    // Fetch children and update availableChildren list
     RequestController req = RequestController(path: 'child/by-guardianId/${widget.parentId}');
     await req.get();
     var response = req.result();
@@ -45,11 +50,13 @@ class _ParentBehaviourState extends State<ParentBehaviour> {
                 performances: [],
               )));
         }
+        // Populate available children names
+        availableChildren = childrenList.map((child) => child.childName).toList();
+        selectedChildName = availableChildren.isNotEmpty ? availableChildren.first : '';
       });
       await fetchBehaviours();
     }
   }
-
   Future<void> fetchBehaviours() async {
     for (var child in childrenList) {
       RequestController req = RequestController(path: 'behaviour/by-childId/${child.childId}');
@@ -234,7 +241,27 @@ class _ParentBehaviourState extends State<ParentBehaviour> {
   Widget _buildDetailedTab() {
     return Column(
       children: [
-        if (availableMonths.isNotEmpty)
+        if (availableChildren.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: DropdownButton<String>(
+              value: selectedChildName,
+              items: availableChildren.map((String childName) {
+                return DropdownMenuItem<String>(
+                  value: childName,
+                  child: Text(childName),
+                );
+              }).toList(),
+              onChanged: (newValue) {
+                setState(() {
+                  selectedChildName = newValue!;
+                  // Populate available months based on selected child
+                  _populateAvailableMonthsForSelectedChild();
+                });
+              },
+            ),
+          ),
+        if (availableMonths.isNotEmpty && selectedChildName.isNotEmpty)
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: DropdownButton<String>(
@@ -259,58 +286,73 @@ class _ParentBehaviourState extends State<ParentBehaviour> {
     );
   }
 
+  void _populateAvailableMonthsForSelectedChild() {
+    setState(() {
+      availableMonths = [];
+      selectedMonthYear = '';
+
+      if (groupedBehaviourMap.isNotEmpty && selectedChildName.isNotEmpty) {
+        availableMonths = groupedBehaviourMap.keys.where((monthYear) {
+          return groupedBehaviourMap[monthYear]!.values.any((dayMap) =>
+              dayMap.keys.any((childName) => childName == selectedChildName));
+        }).toList();
+
+        availableMonths.sort((a, b) => b.compareTo(a));
+        selectedMonthYear = availableMonths.isNotEmpty ? availableMonths.first : '';
+      }
+    });
+  }
+
   Widget _buildBehaviourTable() {
-  if (selectedMonthYear.isEmpty) {
-    return Center(child: Text('No data available for the selected month.'));
-  }
+    if (selectedMonthYear.isEmpty) {
+      return Center(child: Text('No data available for the selected month.'));
+    }
 
-  Map<String, Map<String, List<BehaviourModel>>>? dailyMap = groupedBehaviourMap[selectedMonthYear];
+    Map<String, Map<String, List<BehaviourModel>>>? dailyMap = groupedBehaviourMap[selectedMonthYear];
 
-  if (dailyMap == null || dailyMap.isEmpty) {
-    return Center(child: Text('No data available for the selected month.'));
-  }
+    if (dailyMap == null || dailyMap.isEmpty) {
+      return Center(child: Text('No data available for the selected month.'));
+    }
 
-  // Get all the days in the selected month
-  DateTime firstDayOfMonth = DateTime.parse(selectedMonthYear + '-01');
-  DateTime lastDayOfMonth = DateTime(firstDayOfMonth.year, firstDayOfMonth.month + 1, 0);
-  List<String> allDays = List.generate(lastDayOfMonth.day, (index) {
-    return DateFormat('yyyy-MM-dd').format(DateTime(firstDayOfMonth.year, firstDayOfMonth.month, index + 1));
-  });
+    DateTime firstDayOfMonth = DateTime.parse(selectedMonthYear + '-01');
+    DateTime lastDayOfMonth = DateTime(firstDayOfMonth.year, firstDayOfMonth.month + 1, 0);
+    List<String> allDays = List.generate(lastDayOfMonth.day, (index) {
+      return DateFormat('yyyy-MM-dd').format(DateTime(firstDayOfMonth.year, firstDayOfMonth.month, index + 1));
+    });
 
-  return SingleChildScrollView(
-    scrollDirection: Axis.horizontal,
-    child: SingleChildScrollView(
-      child: Table(
-        border: TableBorder.all(color: Colors.grey),
-        columnWidths: const {
-          0: FixedColumnWidth(150.0), // Date column width
-          1: FixedColumnWidth(150.0), // Type column width
-          2: FixedColumnWidth(250.0), // Description column width
-        },
-        children: [
-          TableRow(
-            decoration: BoxDecoration(color: Colors.green[100]),
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Text('Date', style: TextStyle(fontWeight: FontWeight.bold)),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Text('Type', style: TextStyle(fontWeight: FontWeight.bold)),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Text('Description', style: TextStyle(fontWeight: FontWeight.bold)),
-              ),
-            ],
-          ),
-          for (String day in allDays) ...[
-            if (dailyMap.containsKey(day) && dailyMap[day]!.isNotEmpty)
-              for (var entry in dailyMap[day]!.entries) ...[
-                for (var behaviour in entry.value) 
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: SingleChildScrollView(
+        child: Table(
+          border: TableBorder.all(color: Colors.grey),
+          columnWidths: const {
+            0: FixedColumnWidth(150.0),
+            1: FixedColumnWidth(150.0),
+            2: FixedColumnWidth(250.0),
+          },
+          children: [
+            TableRow(
+              decoration: BoxDecoration(color: Colors.green[100]),
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text('Date', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text('Type', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text('Description', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+            for (String day in allDays) ...[
+              if (dailyMap.containsKey(day) && dailyMap[day]!.containsKey(selectedChildName))
+                for (var behaviour in dailyMap[day]![selectedChildName]!) 
                   TableRow(
-                    decoration: BoxDecoration(color: Colors.green[50]), // Highlight for records
+                    decoration: BoxDecoration(color: Colors.green[50]),
                     children: [
                       Padding(
                         padding: const EdgeInsets.all(8.0),
@@ -326,31 +368,30 @@ class _ParentBehaviourState extends State<ParentBehaviour> {
                       ),
                     ],
                   ),
-              ]
-            else
-              TableRow(
-                decoration: BoxDecoration(color: Colors.red[50]), // Subtle difference for no records
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text(DateFormat('dd MMMM yyyy').format(DateTime.parse(day))),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text('No Record', style: TextStyle(color: Colors.red)),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text('No Record', style: TextStyle(color: Colors.red)),
-                  ),
-                ],
-              ),
+            
+                TableRow(
+                  decoration: BoxDecoration(color: Colors.red[50]),
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(DateFormat('dd MMMM yyyy').format(DateTime.parse(day))),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text('No Record', style: TextStyle(color: Colors.red)),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text('No Record', style: TextStyle(color: Colors.red)),
+                    ),
+                  ],
+                ),
+            ],
           ],
-        ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   List<BehaviourTypeCount> _createSampleData(Map<String, int> typeGroupMap) {
     return typeGroupMap.entries

@@ -175,134 +175,132 @@ class _CaregiverPerformanceState extends State<CaregiverPerformance> {
 
   // Method to add performance
   Future<void> addPerformance() async {
-  try {
-    if (date == null || selectedChild == null) {
-      return;
-    }
+    try {
+      if (date == null || selectedChild == null) {
+        return;
+      }
 
-    RequestController req = RequestController(path: 'add-performance');
-    String formattedDate = DateFormat('yyyy-MM-dd').format(date!);
-    bool isSuccessful = true;
+      RequestController req = RequestController(path: 'add-performance');
+      String formattedDate = DateFormat('yyyy-MM-dd').format(date!);
+      bool isSuccessful = true;
 
-    for (var entry in skillLevels.entries) {
-      String skill = entry.key;
-      int? level = entry.value;
+      for (var entry in skillLevels.entries) {
+        String skill = entry.key;
+        int? level = entry.value;
 
-      if (level != null) {
-        req.setBody({
-          "skill": skill,
-          "level": level.toString(),
-          "date": formattedDate,
-          "child_id": selectedChild!.childId.toString(),
-        });
+        if (level != null) {
+          req.setBody({
+            "skill": skill,
+            "level": level.toString(),
+            "date": formattedDate,
+            "child_id": selectedChild!.childId.toString(),
+          });
 
-        var response = await req.post();
+          var response = await req.post();
 
-        if (response.statusCode != 200 || req.result() == null) {
-          isSuccessful = false;
-          break; // Exit the loop if any request fails
+          if (response.statusCode != 200 || req.result() == null) {
+            isSuccessful = false;
+            break; // Exit the loop if any request fails
+          }
         }
       }
-    }
 
-    // Show a single dialog after processing all skills
-    await showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16.0),
-          ),
-          title: Row(
-            children: [
-              Icon(
-                isSuccessful ? Icons.check_circle : Icons.error,
-                color: isSuccessful ? Colors.green : Colors.red,
-              ),
-              SizedBox(width: 8),
-              Text(
-                isSuccessful ? 'Success!' : 'Oops!',
-                style: TextStyle(
+      // Show a single dialog after processing all skills
+      await showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16.0),
+            ),
+            title: Row(
+              children: [
+                Icon(
+                  isSuccessful ? Icons.check_circle : Icons.error,
                   color: isSuccessful ? Colors.green : Colors.red,
                 ),
+                SizedBox(width: 8),
+                Text(
+                  isSuccessful ? 'Success!' : 'Oops!',
+                  style: TextStyle(
+                    color: isSuccessful ? Colors.green : Colors.red,
+                  ),
+                ),
+              ],
+            ),
+            content: Text(
+              isSuccessful
+                  ? 'The performance data has been successfully saved! 🌟\n\nLet\'s take a look at the performance report!'
+                  : 'Something went wrong while saving the performance data. 😔\n\nNo worries, let\'s try that again and make sure everything is perfect!',
+            ),
+            actions: <Widget>[
+              TextButton(
+                child: Text(
+                  'Got it!',
+                  style: TextStyle(color: Colors.pink),
+                ),
+                onPressed: () {
+                  Navigator.of(context).pop(); // Close the dialog
+                },
               ),
             ],
-          ),
-          content: Text(
-            isSuccessful
-                ? 'The performance data has been successfully saved! 🌟\n\nLet\'s take a look at the performance report!'
-                : 'Something went wrong while saving the performance data. 😔\n\nNo worries, let\'s try that again and make sure everything is perfect!',
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text(
-                'Got it!',
-                style: TextStyle(color: Colors.pink),
-              ),
-              onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
-              },
-            ),
-          ],
-        );
-      },
-    );
+          );
+        },
+      );
 
-    // After the dialog is dismissed, push the next page
-    if (isSuccessful) {
-      await Future.delayed(Duration(seconds: 2));
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => CaregiverPerformanceReport(
-            caregiverId: widget.caregiverId,
+      // After the dialog is dismissed, push the next page
+      if (isSuccessful) {
+        await Future.delayed(Duration(seconds: 2));
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => CaregiverPerformanceReport(
+              caregiverId: widget.caregiverId,
+            ),
           ),
-        ),
+        );
+      }
+    } catch (e) {
+      // Show error dialog for exception
+      await showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16.0),
+            ),
+            title: Row(
+              children: [
+                Icon(
+                  Icons.error,
+                  color: Colors.red,
+                ),
+                SizedBox(width: 8),
+                Text(
+                  'Error!',
+                  style: TextStyle(color: Colors.red),
+                ),
+              ],
+            ),
+            content: Text(
+              'An unexpected error occurred: $e.\n\nBut don\'t worry, we\'ll fix this in no time! Let\'s give it another shot. 💪',
+            ),
+            actions: <Widget>[
+              TextButton(
+                child: Text(
+                  'OK',
+                  style: TextStyle(color: Colors.pink),
+                ),
+                onPressed: () {
+                  Navigator.of(context).pop(); // Close the dialog
+                },
+              ),
+            ],
+          );
+        },
       );
     }
-  } catch (e) {
-    // Show error dialog for exception
-    await showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16.0),
-          ),
-          title: Row(
-            children: [
-              Icon(
-                Icons.error,
-                color: Colors.red,
-              ),
-              SizedBox(width: 8),
-              Text(
-                'Error!',
-                style: TextStyle(color: Colors.red),
-              ),
-            ],
-          ),
-          content: Text(
-            'An unexpected error occurred: $e.\n\nBut don\'t worry, we\'ll fix this in no time! Let\'s give it another shot. 💪',
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text(
-                'OK',
-                style: TextStyle(color: Colors.pink),
-              ),
-              onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
-              },
-            ),
-          ],
-        );
-      },
-    );
   }
-}
-
-
 
   Widget buildSkillsCard() {
     if (selectedChild == null) {
@@ -539,10 +537,19 @@ class _CaregiverPerformanceState extends State<CaregiverPerformance> {
               Center(
                 child: ElevatedButton(
                   onPressed: () {
-                    if (_formKey.currentState!.validate()) {
-                      _formKey.currentState!.save();
-                      addPerformance();
-                      
+                    if (date == null) {
+                      _showErrorDialog('Please select a date.');
+                    } else if (selectedAge == null) {
+                      _showErrorDialog('Please select an age group.');
+                    } else if (selectedChild == null) {
+                      _showErrorDialog('Please select a child.');
+                    } else if (skillLevels.isEmpty) {
+                      _showErrorDialog('Please rate all skills.');
+                    } else {
+                      if (_formKey.currentState!.validate()) {
+                        _formKey.currentState!.save();
+                        addPerformance();
+                      }
                     }
                   },
                   child: Text('Add Performance'),
@@ -552,6 +559,44 @@ class _CaregiverPerformanceState extends State<CaregiverPerformance> {
           ),
         ),
       ),
+    );
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16.0),
+          ),
+          title: Row(
+            children: [
+              Icon(
+                Icons.error,
+                color: Colors.red,
+              ),
+              SizedBox(width: 8),
+              Text(
+                'Error!',
+                style: TextStyle(color: Colors.red),
+              ),
+            ],
+          ),
+          content: Text(message),
+          actions: <Widget>[
+            TextButton(
+              child: Text(
+                'OK',
+                style: TextStyle(color: Colors.pink),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }
